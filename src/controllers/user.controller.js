@@ -14,28 +14,9 @@ const createNew = async (req, res) => {
   }
 }
 
-const verifyAccount = async (req, res) => {
-  try {
-    const result = await UserService.verifyAccount(req.body)
-    res.status(HttpStatusCode.OK).json(result)
-  } catch (error) {
-    res.status(HttpStatusCode.INTERNAL_SERVER).json({
-      errors: error.message
-    })
-  }
-}
-
 const signIn = async (req, res) => {
   try {
     const result = await UserService.signIn(req.body)
-
-    // xử lý cookie ở đây
-    //https://expressjs.com/en/api.html
-
-    //https://www.npmjs.com/package/ms
-    //chinh format cho maxAge
-    res.cookie('accessToken', result.accessToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: ms('14 days') })
-    res.cookie('refreshToken', result.refreshToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: ms('14 days') })
 
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
@@ -47,9 +28,6 @@ const signIn = async (req, res) => {
 
 const signOut = async (req, res) => {
   try {
-    // delete cookie
-    res.clearCookie('accessToken')
-    res.clearCookie('refreshToken')
 
     res.status(HttpStatusCode.OK).json({
       signedOut:true
@@ -65,15 +43,8 @@ const signOut = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const result = await UserService.refreshToken(req.cookies?.refreshToken)
-
-    // xử lý cookie ở đây
-    //https://expressjs.com/en/api.html
-
-    //https://www.npmjs.com/package/ms
-    //chinh format cho maxAge
-    res.cookie('accessToken', result.accessToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: ms('14 days') })
-
+    const result = await UserService.refreshToken(req.body?.refreshToken)
+    
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     // console.log(error)
@@ -99,7 +70,6 @@ const update = async (req, res) => {
 
 export const UserController = {
   createNew,
-  verifyAccount,
   signIn,
   signOut,
   refreshToken,

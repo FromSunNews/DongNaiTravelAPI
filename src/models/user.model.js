@@ -7,35 +7,51 @@ const userCollectionName = 'users'
 const userCollectionSchema = Joi.object({
   email: Joi.string().required(), // unique
   password: Joi.string().required(),
-  username: Joi.string().required().trim(), // username sẽ không unique bởi vì sẽ có những đuôi email từ các nhà cũng cấp khác nhau
+  username: Joi.string().required().min(2).max(30).trim(), // username sẽ không unique bởi vì sẽ có những đuôi email từ các nhà cũng cấp khác nhau
 
-  displayName: Joi.string().required().trim(),
+  displayName: Joi.string().required().min(2).max(30).trim(),
   avatar: Joi.string().default(null),
 
   role: Joi.string().default('client'),
+  location: {
+    longitude: Joi.string().default(null),
+    latitude: Joi.string().default(null)
+  },
+  lovedPlaceIds: Joi.array().items(Joi.string()).default([]),
+  savedPlaceIds: Joi.array().items(Joi.string()).default([]),
+  lovedBlogIds: Joi.array().items(Joi.string()).default([]),
+  savedBlogIds: Joi.array().items(Joi.string()).default([]),
+  
+  receivePoints: Joi.number().integer().default(0),
+  lostPoints: Joi.number().integer().default(0),
 
-  isActive: Joi.boolean().default(false),
-  verifyToken: Joi.string(),
-
+  birthday: Joi.date().timestamp().default(null),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp().default(null)
 })
 
-const INVALID_UPDATE_FILEDS = ['_id', 'email', 'username', 'createdAt']
+// Phuong: Đây là những trường không được update (giá trị cố định không đổi)
+const INVALID_UPDATE_FILEDS = ['_id', 'email', 'username', 'role', 'createdAt']
 
+// Phuong: Tạo Schema để mongodb biết tạo bảng ntn
 const validateSchema = async (data) => {
   return await userCollectionSchema.validateAsync(data, { abortEarly: false })
 }
 
+// Phuong: Tìm dựa trên id của user. 
 const findOneById = async (id) => {
   try {
-    const result = await getDB().collection(userCollectionName).findOne({ _id: ObjectId(id) })
+    const result = await getDB().collection(userCollectionName)
+    // Phuong: Bởi vì key _id trong mongodb đucợ luu ở dạng ObjectId nên phải 
+    // Phuong: chuyển qua ObjectId từ phía client đẩy lên mới tìm được
+    .findOne({ _id: new ObjectId(id) })
     return result
   } catch (error) {
     throw new Error(error)
   }
 }
 
+// Phuong: Tìm dựa trên email
 const findOneByEmail = async (emailValue) => {
   try {
     const result = await getDB().collection(userCollectionName).findOne({ email: emailValue })
@@ -45,6 +61,16 @@ const findOneByEmail = async (emailValue) => {
   }
 }
 
+const findOneByUserName = async (username) => {
+  try {
+    const result = await getDB().collection(userCollectionName).findOne({ username: username })
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+// Phương: tạo mới user
 const createNew = async (data) => {
   try {
     const validatedValue = await validateSchema(data)
@@ -56,10 +82,11 @@ const createNew = async (data) => {
   }
 }
 
+// Phuong: Cập nhật user thông qua _id
 const update = async (id, data) => {
   try {
     const updateData = { ...data }
-
+    // Phuong: CHỗ này là xóa những trường mà mình không cho phép update
     Object.keys(updateData).forEach(fieldName => {
       if (INVALID_UPDATE_FILEDS.includes(fieldName)) {
         delete updateData[fieldName]
@@ -67,7 +94,8 @@ const update = async (id, data) => {
     })
 
     const result = await getDB().collection(userCollectionName).findOneAndUpdate(
-      { _id: ObjectId(id) },
+      // Phuong: Phải chuyển _id ở client thành ObjectId
+      { _id: new ObjectId(id) },
       { $set: updateData },
       { returnDocument: 'after' }
     )
@@ -83,6 +111,7 @@ export const UserModel = {
   createNew,
   update,
   findOneById,
-  findOneByEmail
+  findOneByEmail,
+  findOneByUserName
 }
 

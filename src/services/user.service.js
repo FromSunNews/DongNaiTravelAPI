@@ -14,6 +14,7 @@ import { SendMessageToSlack } from '../providers/SendMessageToSlack'
 
 const createNew = async (data) => {
   try {
+    delete data['password_confirmation']
     // check email have already in system yet ?
     const existUser = await UserModel.findOneByEmail(data.email)
     if (existUser) {
@@ -26,9 +27,8 @@ const createNew = async (data) => {
     const userData = {
       email: data.email,
       password: bcryptjs.hashSync(data.password, 8),
-      username: nameFromEmail,
-      displayName: nameFromEmail,
-      verifyToken: uuidv4()
+      username: data.username ? data.username : nameFromEmail,
+      displayName: data.fullName ? data.fullName : nameFromEmail
     }
 
     const createdUser = await UserModel.createNew(userData)
@@ -36,17 +36,15 @@ const createNew = async (data) => {
 
     // Send email to the user click verify
 
-    const verificationLink = `${WEBSITE_DOMAIN}/account/verification?email=${getUser.email}&token=${getUser.verifyToken}`
+    // const subject = 'DongNaiTravelApp'
+    // const htmlContent = `
+    //   <h3>Welcome to DongNaiTravelApp</h3>
+    //   <h4>Wish you have a lot of fun while accessing our application!</h4>
+    //   <h3>Sincerely,<br/> - DongNaiTravelApp Team - </h3>
+    // `
+    // await SendInBlueProvider.sendEmail(getUser.email, subject, htmlContent)
 
-    const subject = 'Trello Clone App: Please verify your email before using our services!'
-    const htmlContent = `
-      <h3>Here is your verification link:</h3>
-      <h3>${verificationLink}</h3>
-      <h3>Sincerely,<br/> - Trungquandev Official - </h3>
-    `
-    await SendInBlueProvider.sendEmail(getUser.email, subject, htmlContent)
-
-    return pickUser(getUser)
+    return getUser
 
   } catch (error) {
     // console.log(error)
@@ -54,70 +52,42 @@ const createNew = async (data) => {
   }
 }
 
-const verifyAccount = async (data) => {
-  try {
-    const existUser = await UserModel.findOneByEmail(data.email)
-    if (!existUser) {
-      throw new Error('Email do not exsist.')
-    }
-    if (existUser.isActive) {
-      throw new Error('Your account is already active.')
-    }
-    if (data.token !== existUser.verifyToken) {
-      throw new Error('Token is invalid!')
-    }
-
-    const updateData = {
-      verifyToken: null,
-      isActive: true
-    }
-
-    const updatedUser = await UserModel.update(existUser._id.toString(), updateData)
-
-    // console.log(updatedUser)
-
-    return pickUser(updatedUser)
-
-  } catch (error) {
-    throw new Error(error)
-  }
-}
-
 const signIn = async (data) => {
   try {
-    const existUser = await UserModel.findOneByEmail(data.email)
+    let existUser
+    
+    if (data.email)
+      existUser = await UserModel.findOneByEmail(data.email)
+    else
+      existUser = await UserModel.findOneByUserName(data.username)
+      
     if (!existUser) {
       throw new Error('Email does not exsist.')
     }
-    if (!existUser.isActive) {
-      throw new Error('Your account is not active.')
-    }
-
     //Compare password
     if (!bcryptjs.compareSync(data.password, existUser.password)) {
       throw new Error('Your password is incorrect')
     }
 
-    const userInfoToStoreInJwtToken = {
+    let userInfoToStoreInJwtToken = {
       _id: existUser._id,
       email: existUser.email
     }
 
+    
     // handle tokens
     const accessToken = await JwtProvider.generateToken(
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
       env.ACCESS_TOKEN_SECRET_LIFE,
-      // 5,  //để dành test
       userInfoToStoreInJwtToken
     )
 
     const refreshToken = await JwtProvider.generateToken(
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_SECRET_LIFE,
-      // 15, //để dành test
       userInfoToStoreInJwtToken
     )
-
+    // Phuong: trả về cho client refreshToken vs accessToken để lưu vào Persist store
     return { accessToken, refreshToken, ...pickUser(existUser) }
 
   } catch (error) {
@@ -127,19 +97,18 @@ const signIn = async (data) => {
 
 const refreshToken = async (clientRefreshToken) => {
   try {
-    // verify // giải mã token
+    // Phuong: giải mã token
     const refreshTokenDecoded = await JwtProvider.verifyToken(env.REFRESH_TOKEN_SECRET_SIGNATURE, clientRefreshToken)
-    // pull request 11/15/2022
+    // Phuong: lấy được thông tin là _id và email tạo được phần body
     const userInfoToStoreInJwtToken = {
       _id: refreshTokenDecoded._id,
       email: refreshTokenDecoded.email
     }
 
-    // handle tokens
+    // Phuong: tạo mới accessToken vì accessToken là token có thời hạn ngắn
     const accessToken = await JwtProvider.generateToken(
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
       env.ACCESS_TOKEN_SECRET_LIFE,
-      // 5, //để dành test
       userInfoToStoreInJwtToken
     )
 
@@ -232,7 +201,6 @@ const update = async ( userId, data, userAvatarFile ) => {
 
 export const UserService = {
   createNew,
-  verifyAccount,
   signIn,
   refreshToken,
   update
