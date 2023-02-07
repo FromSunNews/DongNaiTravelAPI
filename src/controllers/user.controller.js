@@ -54,6 +54,46 @@ const refreshToken = async (req, res) => {
   }
 }
 
+const verifyOtp = async (req, res) => {
+  try {
+    console.log('Body req', req.body)
+    await UserService.verifyOtp(req.body?.otpCode, req.body?.email)
+    
+    res.status(HttpStatusCode.OK).json({
+      isAuthenticated: true
+    })
+  } catch (error) {
+    // console.log(error)
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: 'OTP incorrect or OTP expired'
+    })
+  }
+}
+
+const sendOtp = async (req, res) => {
+  try {
+    const result = await UserService.sendOtp(req.body)
+
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const result = await UserService.resetPassword(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+
 const update = async (req, res) => {
   try {
     const userId = req.jwtDecoded._id
@@ -73,5 +113,8 @@ export const UserController = {
   signIn,
   signOut,
   refreshToken,
-  update
+  update,
+  sendOtp,
+  verifyOtp,
+  resetPassword
 }

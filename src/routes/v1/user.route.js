@@ -21,7 +21,16 @@ router.route('/sign_out')
 router.route('/refresh_token')
   .get(UserController.refreshToken)
 
+router.route('/send_otp')
+  .post(UserValidation.sendOtp, UserController.sendOtp)  
+
+router.route('/verify_otp')
+  .post(UserController.verifyOtp)
+
 router.route('/update')
   .put(AuthMiddleware.isAuthorized, UploadMiddleware.upload.single('avatar'), UserValidation.update, UserController.update)
+
+  router.route('/reset_password')
+  .put(UserValidation.resetPassword, UserController.resetPassword)
 
 export const userRoutes = router
