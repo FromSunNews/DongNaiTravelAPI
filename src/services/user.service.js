@@ -1,11 +1,9 @@
 import { UserModel } from '*/models/user.model'
 import bcryptjs from 'bcryptjs'
-import { v4 as uuidv4 } from 'uuid'
+import otpGenerator from 'otp-generator'
 import { SendInBlueProvider } from '*/providers/SendInBlueProvider'
 import { RedisQueueProvider } from '*/providers/RedisQueueProvider'
 
-
-import { WEBSITE_DOMAIN } from '*/utilities/constants'
 import { pickUser } from '../utilities/transform'
 import { JwtProvider } from '../providers/JwtProvider'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider'
@@ -14,7 +12,7 @@ import { SendMessageToSlack } from '../providers/SendMessageToSlack'
 
 const createNew = async (data) => {
   try {
-    delete data['password_confirmation']
+    delete data['confirmPassword']
     // check email have already in system yet ?
     const existUser = await UserModel.findOneByEmail(data.email)
     if (existUser) {
@@ -36,13 +34,13 @@ const createNew = async (data) => {
 
     // Send email to the user click verify
 
-    // const subject = 'DongNaiTravelApp'
-    // const htmlContent = `
-    //   <h3>Welcome to DongNaiTravelApp</h3>
-    //   <h4>Wish you have a lot of fun while accessing our application!</h4>
-    //   <h3>Sincerely,<br/> - DongNaiTravelApp Team - </h3>
-    // `
-    // await SendInBlueProvider.sendEmail(getUser.email, subject, htmlContent)
+    const subject = 'DongNaiTravelApp'
+    const htmlContent = `
+      <h4>Welcome to DongNaiTravelApp</h4>
+      <p>Wish you have a lot of fun while accessing our application!</p>
+      <p>Sincerely,<br/> - DongNaiTravelApp Team - </p>
+    `
+    await SendInBlueProvider.sendEmail(getUser.email, subject, htmlContent)
 
     return getUser
 
@@ -55,7 +53,7 @@ const createNew = async (data) => {
 const signIn = async (data) => {
   try {
     let existUser
-    
+
     if (data.email)
       existUser = await UserModel.findOneByEmail(data.email)
     else
@@ -95,6 +93,85 @@ const signIn = async (data) => {
   }
 }
 
+const sendOtp = async (data) => {
+  console.log("🚀 ~ file: user.service.js:97 ~ sendOtp ~ data", data)
+  try {
+    let existUser
+
+    if (data.email)
+      existUser = await UserModel.findOneByEmail(data.email)
+      
+    if (!existUser) {
+      throw new Error('Email does not exsist.')
+    }
+
+    // Phuong: https://www.npmjs.com/package/otp-generator
+    // Phuong: Only generate digits otp code
+    const optCode =  otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false })
+    
+    // Phuong: should be in json 
+    const optCodeToStoreInJwtToken = {
+      optCode: optCode.toString()
+    }
+
+    console.log("🚀 ~ file: user.service.js:112 ~ sendOtp ~ optCode", optCode)
+    console.log("OTP_TOKEN_SECRET_SIGNATURE", env.OTP_TOKEN_SECRET_SIGNATURE)
+
+    const otpToken = await JwtProvider.generateToken(
+      env.OTP_TOKEN_SECRET_SIGNATURE,
+      env.OTP_TOKEN_SECRET_LIFE,
+      optCodeToStoreInJwtToken
+    )
+
+    // Send otp code to the user
+    console.log("🚀 ~ Sending email...")
+    const subject = 'DongNaiTravelApp: Please verify your email to reset password!'
+    const htmlContent = `
+      <p>Hello, this is your OTP :</p>
+      <h3>${optCode}</h3>
+      <p>Don't share it with anyone. This OTP will be valid for 2 minutes</p>
+      <p>Sincerely, DongNaiTravelApp Team</p>
+    `
+    await SendInBlueProvider.sendEmail(data.email, subject, htmlContent)
+
+    // Phuong: otpToken luu vao DB
+    const updatedUser = await UserModel.update(existUser._id, {
+      otpToken: otpToken
+    })
+
+    return pickUser(updatedUser)
+    
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const verifyOtp = async (otpCode, email) => {
+  console.log("🚀 ~ file: user.service.js:149 ~ verifyOtp ~ email", email)
+  console.log("🚀 ~ file: user.service.js:148 ~ verifyOtp ~ otpCode", otpCode)
+  try {
+    let existUser
+
+    if (email)
+      existUser = await UserModel.findOneByEmail(email)
+
+    if (!existUser) {
+      throw new Error('Email does not exsist.')
+    }
+
+    console.log("🚀 ~ file: user.service.js:162 ~ verifyOtp ~ existUser.otpToken", existUser.otpToken)
+    // Phuong: giải mã token
+    const otpTokenDecoded = await JwtProvider.verifyToken(env.OTP_TOKEN_SECRET_SIGNATURE, existUser.otpToken.toString())
+    console.log("🚀 ~ file: user.service.js:151 ~ verifyOtp ~ otpTokenDecoded", otpTokenDecoded.optCode)
+    // Phuong: lấy được thông tin là _id và email tạo được phần body
+    if (otpCode !== otpTokenDecoded.optCode)
+      throw new Error('Otp code incorrect. Please input again!')
+    return 
+  } catch (error) {
+    throw new Error('Otp code expried!')
+  }
+}
+
 const refreshToken = async (clientRefreshToken) => {
   try {
     // Phuong: giải mã token
@@ -114,6 +191,33 @@ const refreshToken = async (clientRefreshToken) => {
 
     return { accessToken }
   } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const resetPassword = async (data) => {
+  try {
+    // check email have already in system yet ?
+    const existUser = await UserModel.findOneByEmail(data.email)
+
+    if (!existUser) {
+      throw new Error('Email dont exist.')
+    }
+
+    const encryptPassword = bcryptjs.hashSync(data.password, 8)
+
+    if (encryptPassword === existUser.password)
+      throw new Error('This password you used!')
+
+    const updatedUser = await UserModel.resetPassword(existUser._id, {
+      password: encryptPassword,
+      updateAt: Date.now()
+    })
+    
+    return pickUser(updatedUser)
+
+  } catch (error) {
+    // console.log(error)
     throw new Error(error)
   }
 }
@@ -203,5 +307,8 @@ export const UserService = {
   createNew,
   signIn,
   refreshToken,
-  update
+  update,
+  sendOtp,
+  verifyOtp,
+  resetPassword
 }

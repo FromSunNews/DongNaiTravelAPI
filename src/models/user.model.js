@@ -24,7 +24,7 @@ const userCollectionSchema = Joi.object({
   
   receivePoints: Joi.number().integer().default(0),
   lostPoints: Joi.number().integer().default(0),
-
+  otpToken: Joi.string().default(null),
   birthday: Joi.date().timestamp().default(null),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp().default(null)
@@ -106,12 +106,32 @@ const update = async (id, data) => {
   }
 }
 
+// Phuong: Cập nhật user thông qua _id
+const resetPassword = async (id, data) => {
+  try {
+    const updateData = { ...data }
+
+
+    const result = await getDB().collection(userCollectionName).findOneAndUpdate(
+      // Phuong: Phải chuyển _id ở client thành ObjectId
+      { _id: new ObjectId(id) },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    )
+
+    return result.value
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const UserModel = {
   userCollectionName,
   createNew,
   update,
   findOneById,
   findOneByEmail,
-  findOneByUserName
+  findOneByUserName,
+  resetPassword
 }
 

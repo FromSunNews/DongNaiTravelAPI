@@ -15,8 +15,8 @@ const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi()
 // } 
 
 const adminSender = {
-  email: 'quanlightning17@gmail.com', // Email tai khoan tao tren sendinblue
-  name: 'trungquandev'
+  email: 'dongnaitravelapp@gmail.com', // Email tai khoan tao tren sendinblue
+  name: 'DongNaiTravelApp'
  }
 
 const sendEmail = async (toEmail, subject, htmlContent)=>{
