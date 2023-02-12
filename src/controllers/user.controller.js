@@ -1,7 +1,6 @@
 import { HttpStatusCode } from '*/utilities/constants'
 import { UserService } from '*/services/user.service'
-
-import ms from 'ms'
+import { env } from '*/config/environtment'
 
 const createNew = async (req, res) => {
   try {
@@ -40,11 +39,25 @@ const signOut = async (req, res) => {
   }
 }
 
+const privateKeys = async (req, res) => {
+  try {
+
+    res.status(HttpStatusCode.OK).json({
+      map_api_key: env.MAP_API_KEY
+    })
+    console.log('privateKeys......')
+
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
 const refreshToken = async (req, res) => {
   try {
     const result = await UserService.refreshToken(req.body?.refreshToken)
-    
+
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     // console.log(error)
@@ -58,7 +71,7 @@ const verifyOtp = async (req, res) => {
   try {
     console.log('Body req', req.body)
     await UserService.verifyOtp(req.body?.otpCode, req.body?.email)
-    
+
     res.status(HttpStatusCode.OK).json({
       isAuthenticated: true
     })
@@ -116,5 +129,6 @@ export const UserController = {
   update,
   sendOtp,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  privateKeys
 }
