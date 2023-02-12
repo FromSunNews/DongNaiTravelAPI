@@ -8,7 +8,7 @@ import { UploadMiddleware } from '*/middlewares/upload.middleware'
 // console.log(UploadMiddleware)
 const router = express.Router()
 
-router.route('/sign_up') 
+router.route('/sign_up')
 
   .post(UserValidation.createNew, UserController.createNew)
 
@@ -22,7 +22,7 @@ router.route('/refresh_token')
   .get(UserController.refreshToken)
 
 router.route('/send_otp')
-  .post(UserValidation.sendOtp, UserController.sendOtp)  
+  .post(UserValidation.sendOtp, UserController.sendOtp)
 
 router.route('/verify_otp')
   .post(UserController.verifyOtp)
@@ -30,7 +30,9 @@ router.route('/verify_otp')
 router.route('/update')
   .put(AuthMiddleware.isAuthorized, UploadMiddleware.upload.single('avatar'), UserValidation.update, UserController.update)
 
-  router.route('/reset_password')
+router.route('/reset_password')
   .put(UserValidation.resetPassword, UserController.resetPassword)
 
+router.route('/private_keys')
+  .get(UserController.privateKeys)
 export const userRoutes = router

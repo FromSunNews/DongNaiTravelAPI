@@ -58,7 +58,7 @@ const signIn = async (data) => {
       existUser = await UserModel.findOneByEmail(data.email)
     else
       existUser = await UserModel.findOneByUserName(data.username)
-      
+
     if (!existUser) {
       throw new Error('Email does not exsist.')
     }
@@ -72,7 +72,7 @@ const signIn = async (data) => {
       email: existUser.email
     }
 
-    
+
     // handle tokens
     const accessToken = await JwtProvider.generateToken(
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
@@ -94,28 +94,28 @@ const signIn = async (data) => {
 }
 
 const sendOtp = async (data) => {
-  console.log("🚀 ~ file: user.service.js:97 ~ sendOtp ~ data", data)
+  console.log('🚀 ~ file: user.service.js:97 ~ sendOtp ~ data', data)
   try {
     let existUser
 
     if (data.email)
       existUser = await UserModel.findOneByEmail(data.email)
-      
+
     if (!existUser) {
       throw new Error('Email does not exsist.')
     }
 
     // Phuong: https://www.npmjs.com/package/otp-generator
     // Phuong: Only generate digits otp code
-    const optCode =  otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false })
-    
-    // Phuong: should be in json 
+    const optCode = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false, lowerCaseAlphabets: false })
+
+    // Phuong: should be in json
     const optCodeToStoreInJwtToken = {
       optCode: optCode.toString()
     }
 
-    console.log("🚀 ~ file: user.service.js:112 ~ sendOtp ~ optCode", optCode)
-    console.log("OTP_TOKEN_SECRET_SIGNATURE", env.OTP_TOKEN_SECRET_SIGNATURE)
+    console.log('🚀 ~ file: user.service.js:112 ~ sendOtp ~ optCode', optCode)
+    console.log('OTP_TOKEN_SECRET_SIGNATURE', env.OTP_TOKEN_SECRET_SIGNATURE)
 
     const otpToken = await JwtProvider.generateToken(
       env.OTP_TOKEN_SECRET_SIGNATURE,
@@ -124,7 +124,7 @@ const sendOtp = async (data) => {
     )
 
     // Send otp code to the user
-    console.log("🚀 ~ Sending email...")
+    console.log('🚀 ~ Sending email...')
     const subject = 'DongNaiTravelApp: Please verify your email to reset password!'
     const htmlContent = `
       <p>Hello, this is your OTP :</p>
@@ -140,15 +140,15 @@ const sendOtp = async (data) => {
     })
 
     return pickUser(updatedUser)
-    
+
   } catch (error) {
     throw new Error(error)
   }
 }
 
 const verifyOtp = async (otpCode, email) => {
-  console.log("🚀 ~ file: user.service.js:149 ~ verifyOtp ~ email", email)
-  console.log("🚀 ~ file: user.service.js:148 ~ verifyOtp ~ otpCode", otpCode)
+  console.log('🚀 ~ file: user.service.js:149 ~ verifyOtp ~ email', email)
+  console.log('🚀 ~ file: user.service.js:148 ~ verifyOtp ~ otpCode', otpCode)
   try {
     let existUser
 
@@ -159,14 +159,14 @@ const verifyOtp = async (otpCode, email) => {
       throw new Error('Email does not exsist.')
     }
 
-    console.log("🚀 ~ file: user.service.js:162 ~ verifyOtp ~ existUser.otpToken", existUser.otpToken)
+    console.log('🚀 ~ file: user.service.js:162 ~ verifyOtp ~ existUser.otpToken', existUser.otpToken)
     // Phuong: giải mã token
     const otpTokenDecoded = await JwtProvider.verifyToken(env.OTP_TOKEN_SECRET_SIGNATURE, existUser.otpToken.toString())
-    console.log("🚀 ~ file: user.service.js:151 ~ verifyOtp ~ otpTokenDecoded", otpTokenDecoded.optCode)
+    console.log('🚀 ~ file: user.service.js:151 ~ verifyOtp ~ otpTokenDecoded', otpTokenDecoded.optCode)
     // Phuong: lấy được thông tin là _id và email tạo được phần body
     if (otpCode !== otpTokenDecoded.optCode)
       throw new Error('Otp code incorrect. Please input again!')
-    return 
+    return
   } catch (error) {
     throw new Error('Otp code expried!')
   }
@@ -213,7 +213,7 @@ const resetPassword = async (data) => {
       password: encryptPassword,
       updateAt: Date.now()
     })
-    
+
     return pickUser(updatedUser)
 
   } catch (error) {

@@ -11,7 +11,7 @@ const createNew = async (req, res, next) => {
     username: Joi.string().required().min(2).max(30).trim(),
     password: Joi.string().required().pattern(PASSWORD_RULE).message('Password is invalid!'),
     /**
-    * Phuong: 
+    * Phuong:
     * Custom messsage với thằng Joi.ref khá khó tìm trong docs, cách tìm là bắt keyword để tìm những người từng hỏi chung 1 vấn đề,
     * Ví dụ như link bên dưới, tìm ra cách custom bằng any.only trong hàm messages(json object)
     * https://github.com/sideway/joi/issues/2147#issuecomment-537372635
@@ -26,7 +26,7 @@ const createNew = async (req, res, next) => {
     }),
     birthday: Joi.date().timestamp(),
     firstName: Joi.string().min(2).max(30).trim(),
-    lastName: Joi.string().min(2).max(30).trim(),
+    lastName: Joi.string().min(2).max(30).trim()
 
   })
   try {
@@ -43,7 +43,7 @@ const signIn = async (req, res, next) => {
   const condition = Joi.object({
     username: Joi.string().min(2).max(30).trim(),
     email: Joi.string().pattern(EMAIL_RULE).message('Email is invalid'),
-    password: Joi.string().required().pattern(PASSWORD_RULE).message('Password is invalid'),
+    password: Joi.string().required().pattern(PASSWORD_RULE).message('Password is invalid')
   })
   try {
     await condition.validateAsync(req.body, { abortEarly: false })
@@ -95,7 +95,7 @@ const resetPassword = async (req, res, next) => {
     confirmPassword: Joi.string().required().valid(Joi.ref('password')).messages({
       'any.only': 'Password Confirmation is not match',
       'any.required': 'Password Confirmation is required'
-    }),
+    })
   })
   try {
     await condition.validateAsync(req.body, {
