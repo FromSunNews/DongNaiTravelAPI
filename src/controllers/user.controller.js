@@ -45,7 +45,7 @@ const privateKeys = async (req, res) => {
     res.status(HttpStatusCode.OK).json({
       map_api_key: env.MAP_API_KEY
     })
-    console.log('privateKeys......')
+    console.log('privateKeys: ', env.MAP_API_KEY)
 
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
