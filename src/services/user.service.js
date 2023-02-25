@@ -60,11 +60,11 @@ const signIn = async (data) => {
       existUser = await UserModel.findOneByUserName(data.username)
 
     if (!existUser) {
-      throw new Error('Email does not exsist.')
+      throw new Error('Email or Username does not exsist.')
     }
     //Compare password
     if (!bcryptjs.compareSync(data.password, existUser.password)) {
-      throw new Error('Your password is incorrect')
+      throw new Error('Your password is incorrect.')
     }
 
     let userInfoToStoreInJwtToken = {

@@ -5,6 +5,7 @@ import encodeUrl from 'encodeurl'
 import { PlacesSearchProvider } from '../providers/PlacesSearchProvider'
 import { SendMessageToSlack } from '../providers/SendMessageToSlack'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider'
+import axios from 'axios'
 
 const getPlacesTextSearch = async (req, res) => {
   try {
@@ -19,20 +20,20 @@ const getPlacesTextSearch = async (req, res) => {
 
 const privateKeys = async (req, res) => {
   try {
-
     res.status(HttpStatusCode.OK).json({
       map_api_key: env.MAP_API_KEY
     })
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
-    // const result = await PlacesSearchProvider.getPlacePhotosAPI({
-    //   photo_reference :'Aap_uEA7vb0DDYVJWEaX3O-AtYp77AaswQKSGtDaimt3gt7QCNpdjp1BkdM6acJ96xTec3tsV_ZJNL_JP-lqsVxydG3nh739RE_hepOOL05tfJh2_ranjMadb3VoBYFvF0ma6S24qZ6QJUuV6sSRrhCskSBP5C1myCzsebztMfGvm7ij3gZT'
-    // })
-    // console.log('privateKeys: ', env.MAP_API_KEY)
-    // console.log('result: ', result)
-    // SendMessageToSlack.sendToSlack('result:' + result)
-    // const buffer = new Buffer(result, 'binary')
-    // await CloudinaryProvider.streamUpload(buffer, 'users')
-
+const getPlaceDetails = async (req, res) => {
+  try {
+    const result = await MapService.getPlaceDetails(req.body)
+    res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
       errors: error.message
@@ -67,7 +68,8 @@ const privateKeys = async (req, res) => {
 
 export const MapController = {
   getPlacesTextSearch,
-  privateKeys
+  privateKeys,
+  getPlaceDetails
   // createNew,
   // update,
 }

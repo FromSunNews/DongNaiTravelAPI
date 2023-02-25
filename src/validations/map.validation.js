@@ -4,9 +4,9 @@ import { HttpStatusCode } from '*/utilities/constants'
 const getPlacesTextSearch = async (req, res, next) => {
   const condition = Joi.object({
     // 'query', 'radius', 'language', 'location', 'maxprice', 'minprice', 'opennow', 'pagetoken', 'region', 'type', 'key'
-    query: Joi.string().min(2).max(50).trim(),
+    query: Joi.string().required().min(2).max(50).trim(),
     radius: Joi.string().min(3).max(5).trim(),
-    location: Joi.object(),
+    location: Joi.object().required(),
     maxprice: Joi.string().min(2).max(50).trim(),
     minprice: Joi.string().min(2).max(50).trim(),
     opennow: Joi.string().min(2).max(50).trim(),
@@ -22,6 +22,21 @@ const getPlacesTextSearch = async (req, res, next) => {
     })
   }
 }
+const getPlaceDetails = async (req, res, next) => {
+  const condition = Joi.object({
+    placeId: Joi.string().required().trim()
+  })
+  try {
+    // console.log('🚀 ~ file: map.validation.js:31 ~ getPlaceDetails ~ req.body', req.body)
+    await condition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    res.status(HttpStatusCode.BAD_REQUEST).json({
+      errors: new Error(error).message
+    })
+  }
+}
+
 
 // const createNew = async (req, res, next) => {
 //   const condition = Joi.object({
@@ -55,7 +70,8 @@ const getPlacesTextSearch = async (req, res, next) => {
 // }
 
 export const MapValidation = {
-  getPlacesTextSearch
+  getPlacesTextSearch,
+  getPlaceDetails
   // createNew,
   // update
 }

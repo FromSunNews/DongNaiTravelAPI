@@ -39,6 +39,7 @@ const mapCollectionSchema = Joi.object({
   user_ratings_total: Joi.number().default(null),
 
   reviews: Joi.array().default(null),
+  editorial_summary: Joi.object().default(null),
 
   types: Joi.array().default(null),
 
@@ -47,12 +48,11 @@ const mapCollectionSchema = Joi.object({
   vicinity: Joi.string().default(null),
   website: Joi.string().default(null),
   wheelchair_accessible_entrance: Joi.boolean().default(null),
-
+  permanently_closed : Joi.boolean().default(null),
   curbside_pickup: Joi.boolean().default(null),
   delivery: Joi.boolean().default(null),
   dine_in: Joi.boolean().default(null),
   price_level: Joi.number().default(null),
-  permanently_closed: Joi.boolean().default(null),
   reservable: Joi.boolean().default(null),
   scope: Joi.string().default(null),
   secondary_opening_hours: Joi.array().default(null),
@@ -138,9 +138,12 @@ const update = async (id, data) => {
 }
 
 const createManyPlaces = async (places) => {
+  // console.log('🚀 ~ file: map.model.js:141 ~ createManyPlaces ~ places', places)
   try {
     // Phuong: https://www.mongodb.com/docs/v6.0/reference/method/db.collection.insertMany/#mongodb-method-db.collection.insertMany
     const result = await getDB().collection(mapCollectionName).insertMany(places)
+    console.log('🚀 ~ Successfully ~ createManyPlaces ~ places')
+
     return result
   } catch (error) {
     throw new Error(error)
