@@ -5,13 +5,14 @@ const getPlacesTextSearch = async (req, res, next) => {
   const condition = Joi.object({
     // 'query', 'radius', 'language', 'location', 'maxprice', 'minprice', 'opennow', 'pagetoken', 'region', 'type', 'key'
     query: Joi.string().required().min(2).max(50).trim(),
-    radius: Joi.string().min(3).max(5).trim(),
+    radius: Joi.string().required().min(3).max(5).trim(),
     location: Joi.object().required(),
-    maxprice: Joi.string().min(2).max(50).trim(),
-    minprice: Joi.string().min(2).max(50).trim(),
-    opennow: Joi.string().min(2).max(50).trim(),
+    maxprice: Joi.string().trim(),
+    minprice: Joi.string().trim(),
+    opennow: Joi.string().trim(),
     pagetoken: Joi.string().trim(),
-    type: Joi.string().min(2).max(50).trim()
+    type: Joi.string().min(2).max(50).trim(),
+    sortBy: Joi.string().min(2).max(50).trim()
   })
   try {
     await condition.validateAsync(req.body, { abortEarly: false })

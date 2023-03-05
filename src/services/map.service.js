@@ -4,29 +4,50 @@ import { PlacesSearchProvider } from '../providers/PlacesSearchProvider'
 import { SendMessageToSlack } from '../providers/SendMessageToSlack'
 import { RedisQueueProvider } from '*/providers/RedisQueueProvider'
 
-import { MapApiStatus } from '../utilities/constants'
+import { FilterConstants, MapApiStatus } from '../utilities/constants'
 import axios from 'axios'
 import { env } from '*/config/environtment'
 import { Buffer } from 'buffer'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, sortBy } from 'lodash'
+import { filterRadiusProminenceOrNearBy, sortByRatingHighToLow, sortByRatingLowToHigh, sortByStarHighToLow, sortByStarLowToHigh } from '../utilities/function'
 
 const getPlacesTextSearch = async (data) => {
   console.log('🚀 ~ file: map.service.js:14 ~ getPlacesTextSearch ~ data', data)
   // data theo dạng {
+  // type: string,
+  // sortBy: string,
+  // radius: string,
   // query: string,
   // location: {
   // latitude: number,
   // longitude: number
-  // }
+  // },
+
   // }
   try {
     const startTime = Date.now()
+    let sortBy = data.sortBy
+    delete data.sortBy
+
+    if (sortBy === FilterConstants.sortBy.PROMINENCE) {
+      // Xóa radius và thêm vào rankBy
+      delete data.radius
+      data.rankby = env.RANKBY_PROMINENCE
+    } else if (sortBy === FilterConstants.sortBy.NEAR_BY) {
+      // Xóa radius và thêm vào rankBy
+      delete data.radius
+      data.rankby = env.RANKBY_DISTANCE
+    }
+
     const result = await PlacesSearchProvider.getPlacesTextSearchAPI(data)
 
     let places
+    let nextPageToken
 
-    if (result?.status === 'OK')
+    if (result?.status === 'OK') {
+      nextPageToken = result.next_page_token
       places = result.results
+    }
     else
       throw new Error(MapApiStatus[result.status])
 
@@ -172,7 +193,7 @@ const getPlacesTextSearch = async (data) => {
     // vì các tác vụ background job được chạy sau khi data trả về cho người dùng, và dữ liệu sẽ được lấy từ places
     // nếu thằng places bị biến đổi thì thằng background job này sẽ lấy dữ liệu bị biến đổi đó đem đi xử lý
     // do mình muốn dùng dữ liệu cũ nên phải cloneDeep dữ liệu khi trả về
-    const placesClone = cloneDeep(places)
+    let placesClone = cloneDeep(places)
 
     placesClone.map(place => place.photos && photosToReturn.push(place.photos[0].photo_reference))
     // console.log('🚀 ~ file: map.service.js:32 ~ getPlacesTextSearch ~ photosToReturn', photosToReturn)
@@ -199,8 +220,30 @@ const getPlacesTextSearch = async (data) => {
       }
     )
 
-    console.log('Trả dữ liệu về cho người dùng')
-    return placesClone
+    const location = {
+      lat: data.location.latitude,
+      lng: data.location.longitude
+    }
+
+    if (sortBy === FilterConstants.sortBy.PROMINENCE || sortBy === FilterConstants.sortBy.NEAR_BY) {
+      const resultFilterRadius = filterRadiusProminenceOrNearBy(placesClone, location, parseInt(data.radius))
+      placesClone = resultFilterRadius.arrPlace
+      if (resultFilterRadius.isDeleteNextPageToken)
+        nextPageToken = null
+    } else if (sortBy === FilterConstants.sortBy.STAR_LOW_TO_HIGH) {
+      placesClone = sortByStarLowToHigh(placesClone)
+    } else if (sortBy === FilterConstants.sortBy.STAR_HIGH_TO_LOW) {
+      placesClone = sortByStarHighToLow(placesClone)
+    } else if (sortBy === FilterConstants.sortBy.RATING_LOW_TO_HIGH) {
+      placesClone = sortByRatingLowToHigh(placesClone)
+    } else if (sortBy === FilterConstants.sortBy.RATING_HIGH_TO_LOW) {
+      placesClone = sortByRatingHighToLow(placesClone)
+    }
+
+    return {
+      arrPlace: placesClone,
+      nextPageToken: nextPageToken
+    }
 
   } catch (error) {
     throw new Error(error)
@@ -276,7 +319,6 @@ const getPlaceDetails = async (data) => {
     } else {
       placeTranform = existPlace
     }
-
     // Sau đó trả về cho user thoy
     return placeTranform
 
