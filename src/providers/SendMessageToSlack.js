@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios from 'axios'
 import { env } from '*/config/environtment'
 
 const sendToSlack = (text) => {
