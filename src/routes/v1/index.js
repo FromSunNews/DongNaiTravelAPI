@@ -3,6 +3,7 @@ import { HttpStatusCode } from '*/utilities/constants'
 
 import { userRoutes } from './user.route'
 import { mapRoutes } from './map.route'
+import { directionRoutes } from './direction.route'
 
 const router = express.Router()
 
@@ -11,10 +12,13 @@ const router = express.Router()
  */
 router.get('/status', (req, res) => res.status(HttpStatusCode.OK).json({ status: 'OK!' }))
 
-/** USer APIs */
+/** User APIs */
 router.use('/users', userRoutes)
 
-/** USer APIs */
+/** Map APIs */
 router.use('/map', mapRoutes)
+
+/** Direction APIs */
+router.use('/direction', directionRoutes)
 
 export const apiV1 = router

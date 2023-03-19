@@ -8,9 +8,13 @@ router.route('/places_text_search')
   .post(MapValidation.getPlacesTextSearch, MapController.getPlacesTextSearch)
 
 router.route('/place_details')
-  .post( MapController.getPlaceDetails)
+  .post(MapController.getPlaceDetails)
+
+router.route('/ors_directions')
+  .post(MapController.getDirectionsORS)
 
 router.route('/private_keys')
   .get(MapController.privateKeys)
+
 
 export const mapRoutes = router
