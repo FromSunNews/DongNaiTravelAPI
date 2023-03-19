@@ -132,7 +132,7 @@ const getPlaceDetailsAPI = async (params) => {
     if (field !== 'key' && params[field])
       url = url +'&'
   })
-  // console.log('🚀 getPlaceDetailsAPI ~ url', url)
+  console.log('🚀 getPlaceDetailsAPI ~ url', url)
 
   const request = await axios.get(url)
 
@@ -171,7 +171,7 @@ const getPlacePhotosAPI = async (params) => {
     if (field !== 'key' && params[field])
       url = url +'&'
   })
-  // console.log('🚀 getPlaceDetailsAPI ~ url', url)
+  console.log('🚀 getPlaceDetailsAPI ~ url', url)
 
   const request = await axios.get(url)
 

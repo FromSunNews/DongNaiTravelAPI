@@ -6,6 +6,11 @@ import { getDB } from '*/config/mongodb'
 const mapCollectionName = 'maps'
 const mapCollectionSchema = Joi.object({
   place_id: Joi.string().required(),
+  // get _id in photos collection
+  photos_id: Joi.string().default(null),
+  // get _id in reviews collection
+  reviews_id: Joi.string().default(null),
+
   reference: Joi.string().default(null),
 
   plus_code: Joi.object().default(null),
@@ -33,12 +38,12 @@ const mapCollectionSchema = Joi.object({
   icon_mask_base_uri : Joi.string().default(null),
 
   // photos:
-  photos: Joi.array().default(null),
+  // photos: Joi.array().default(null),
 
   rating: Joi.number().default(null),
   user_ratings_total: Joi.number().default(null),
 
-  reviews: Joi.array().default(null),
+  // reviews: Joi.array().default(null),
   editorial_summary: Joi.object().default(null),
 
   types: Joi.array().default(null),

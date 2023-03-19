@@ -1,11 +1,6 @@
 import { HttpStatusCode } from '*/utilities/constants'
 import { MapService } from '*/services/map.service'
 import { env } from '*/config/environtment'
-import encodeUrl from 'encodeurl'
-import { PlacesSearchProvider } from '../providers/PlacesSearchProvider'
-import { SendMessageToSlack } from '../providers/SendMessageToSlack'
-import { CloudinaryProvider } from '../providers/CloudinaryProvider'
-import axios from 'axios'
 
 const getPlacesTextSearch = async (req, res) => {
   try {
@@ -21,7 +16,8 @@ const getPlacesTextSearch = async (req, res) => {
 const privateKeys = async (req, res) => {
   try {
     res.status(HttpStatusCode.OK).json({
-      map_api_key: env.MAP_API_KEY
+      map_api_key: env.MAP_API_KEY,
+      ors_api_key: [ env.ORS_API_KEY1 ]
     })
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -33,6 +29,17 @@ const privateKeys = async (req, res) => {
 const getPlaceDetails = async (req, res) => {
   try {
     const result = await MapService.getPlaceDetails(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const getDirectionsORS = async (req, res) => {
+  try {
+    const result = await MapService.getDirectionsORS(req.body)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -69,7 +76,8 @@ const getPlaceDetails = async (req, res) => {
 export const MapController = {
   getPlacesTextSearch,
   privateKeys,
-  getPlaceDetails
+  getPlaceDetails,
+  getDirectionsORS
   // createNew,
   // update,
 }

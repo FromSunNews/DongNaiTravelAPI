@@ -17,20 +17,41 @@ cloudinaryV2.config({
   api_secret: env.CLOUDINARY_API_SECRET
 })
 
-const streamUpload = (fileBuffer, folderName) => {
+const streamUpload = async (fileBuffer, folderName) => {
   return new Promise((resolve, reject) => {
-    let stream = cloudinaryV2.uploader.upload_stream({ folde: folderName }, (err, result) => {
+    let stream = cloudinaryV2.uploader.upload_stream({ folder: folderName }, (err, result) => {
       if (err) {
         reject(err)
       } else {
         resolve(result)
       }
     })
-
     streamifier.createReadStream(fileBuffer).pipe(stream)
   })
 }
 
+const streamUploadMutiple = async (fileBuffers, folderName) => {
+  const uploadPromises = fileBuffers.map(fileBuffer => {
+    return new Promise((resolve, reject) => {
+      let stream = cloudinaryV2.uploader.upload_stream({ folder: folderName }, (err, result) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(result)
+        }
+      })
+
+      streamifier.createReadStream(fileBuffer).pipe(stream)
+    })
+  })
+  // Đây là tiến trinh song song => giảm được thời gian chờ
+  const results = await Promise.all(uploadPromises)
+  if (results)
+    return results
+  else return
+}
+
 export const CloudinaryProvider = {
-  streamUpload
+  streamUpload,
+  streamUploadMutiple
 }
