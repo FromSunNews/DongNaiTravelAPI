@@ -5,6 +5,7 @@ import { env } from '*/config/environtment'
 const getPlacesTextSearch = async (req, res) => {
   try {
     const result = await MapService.getPlacesTextSearch(req.body)
+    console.log('🚀 ~ file: map.controller.js:8 ~ getPlacesTextSearch ~ result:', result)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -29,17 +30,6 @@ const privateKeys = async (req, res) => {
 const getPlaceDetails = async (req, res) => {
   try {
     const result = await MapService.getPlaceDetails(req.body)
-    res.status(HttpStatusCode.OK).json(result)
-  } catch (error) {
-    res.status(HttpStatusCode.INTERNAL_SERVER).json({
-      errors: error.message
-    })
-  }
-}
-
-const getDirectionsORS = async (req, res) => {
-  try {
-    const result = await MapService.getDirectionsORS(req.body)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -76,8 +66,7 @@ const getDirectionsORS = async (req, res) => {
 export const MapController = {
   getPlacesTextSearch,
   privateKeys,
-  getPlaceDetails,
-  getDirectionsORS
+  getPlaceDetails
   // createNew,
   // update,
 }

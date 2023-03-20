@@ -10,9 +10,6 @@ router.route('/places_text_search')
 router.route('/place_details')
   .post(MapController.getPlaceDetails)
 
-router.route('/ors_directions')
-  .post(MapController.getDirectionsORS)
-
 router.route('/private_keys')
   .get(MapController.privateKeys)
 

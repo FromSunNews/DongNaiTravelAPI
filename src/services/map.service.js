@@ -82,7 +82,7 @@ const getPlacesTextSearch = async (data) => {
             // Nó được gọi là parallel axios api
             // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
             // Gọi hết api place details thông qua các placeId bằng cách gọi tiến trình song song
-            await axios.all(
+            axios.all(
               placeIds.map(placeId => axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&language=vi&key=${env.MAP_API_KEY}`))
             ).then(datas => {
 
@@ -102,13 +102,17 @@ const getPlacesTextSearch = async (data) => {
                   delete newPlace.photos
                   if (photosClone) {
 
-                    photosClone.map(photo => photosReference.push(photo.photo_reference))
+                    photosClone.map(photo => photosReference.push({
+                      height: Math.floor(photo.height),
+                      width: Math.floor(photo.width),
+                      photo_reference: photo.photo_reference
+                    }))
                     // console.log('🚀 ~ file: map.service.js:60 ~ createPlacesQueue.process ~ photosReference', photosReference)
 
                     // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
                     // gọi tiến trình song để lấy loạt dữ liệu của photos
                     await axios.all(
-                      photosReference.map(photoReference => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoReference}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
+                      photosReference.map(photoReference => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=${photoReference.width}&maxheight=${photoReference.height}&photo_reference=${photoReference.photo_reference}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
                     ).then(
                       async (datas) => {
                         let photoBuffers = []
@@ -129,7 +133,7 @@ const getPlacesTextSearch = async (data) => {
                         //  thêm trường photoId trong newPlace
                         newPlace.photos_id = photosUpdated.insertedId.toString()
                       }
-                    )
+                    ).catch(err => console.log('Lỗi khi gọi place photos', err))
                   }
 
                   // Xóa thằng reviews trong newPlace
@@ -162,16 +166,16 @@ const getPlacesTextSearch = async (data) => {
                         //  thêm trường photoId trong newPlace
                         newPlace.reviews_id = photosUpdated.insertedId.toString()
                       }
-                    )
+                    ).catch(err => console.log('Lỗi ở gọi photo reviews', err))
                   }
-
+                  MapModel.createNew(newPlace)
                   placesDetails.push(newPlace)
                 } else {
                   console.log('Place đã có ...')
                 }
               })
-            }
-            )
+
+            }).catch(err => console.log('Lỗi khi gọi place details', err))
 
             // Bây giờ lưu vào database với 1 mảng obj của placesDetails
             // Bởi vì mình đang call api 20 vòng lặp xong trong 20 vòng lặp, mỗi kết quả trả về lại call
@@ -183,13 +187,13 @@ const getPlacesTextSearch = async (data) => {
             // Có cách nào hay hơn thì say me nha
             setTimeout(async () => {
               if (placesDetails.length > 0) {
-                const placeDetailsCreated = await MapModel.createManyPlaces(placesDetails)
-                done(null, placeDetailsCreated)
+                // const placeDetailsCreated = await MapModel.createManyPlaces(placesDetails)
+                done(null, `Tất cả ${placesDetails.length} Place đều đã có trong db!`)
               } else {
-                done(null, 'Tất cả các Place đều đã có trong db!')
+                done(null, `${placesDetails.length} Place đều đã có trong db!`)
               }
-            }, 30000)
-
+            }, 40000)
+            // done(null, 'Tiến trình đã xong!')
           } catch (error) {
             done(new Error('Error from createPlacesQueue.process'))
           }
@@ -198,24 +202,28 @@ const getPlacesTextSearch = async (data) => {
         // Phuong: Nhiều event khác: https:// Phuong: github.com/OptimalBits/bull/blob/HEAD/REFERENCE.md#events
         createPlacesQueue.on('completed', (job, result) => {
         // Phuong  Bắn kết quả về Slack
+          createPlacesQueue.close()
+          console.log('Close queue')
           SendMessageToSlack.sendToSlack(`Job với id là: ${job.id} và tên job: *${job.queue.name}* đã *xong* và kết quả là: ${result}> Tác vụ hoàn thành trong ${ Date.now() - startTime}s`)
         })
 
         createPlacesQueue.on('failed', (job, error) => {
         // Phuong: Bắn lỗi về Slack hoặc Telegram ...
+          createPlacesQueue.close()
+          console.log('Close queue')
           SendMessageToSlack.sendToSlack(`Notification: Job với id là ${job.id} và tên job là *${job.queue.name}* đã bị *lỗi* \n\n ${error}`)
         })
 
         // Phuong: Bước 4: bước quan trọng cuối cùng: Thêm vào vào đợi Redis để xử lý
         createPlacesQueue.add(places, {
-          attempts: 0, // Phuong: số lần thử lại nếu lỗi
-          backoff: 5000 // Phuong: khoảng thời gian delay giữa các lần thử lại job
         })
       } catch (error) {
         throw new Error(`Error when call backgound job: ${error}`)
       }
     }
 
+    console.log('====================================================================================================')
+    console.log('Bắt đầu gọi để lấy base 64')
     let photosToReturn = []
 
     // vì các tác vụ background job được chạy sau khi data trả về cho người dùng, và dữ liệu sẽ được lấy từ places
@@ -223,12 +231,16 @@ const getPlacesTextSearch = async (data) => {
     // do mình muốn dùng dữ liệu cũ nên phải cloneDeep dữ liệu khi trả về
     let placesClone = cloneDeep(places)
 
-    placesClone.map(place => place.photos && photosToReturn.push(place.photos[0].photo_reference))
+    placesClone.map(place => place.photos && photosToReturn.push({
+      height: Math.floor(place.photos[0].height/2),
+      width: Math.floor(place.photos[0].width/2),
+      photo_reference: place.photos[0].photo_reference
+    }))
     // console.log('🚀 ~ file: map.service.js:32 ~ getPlacesTextSearch ~ photosToReturn', photosToReturn)
 
     // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
     await axios.all(
-      photosToReturn.map(async photo => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
+      photosToReturn.map(photoReference => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=${photoReference.width}&maxheight=${photoReference.height}&photo_reference=${photoReference.photo_reference}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
     ).then(
       (datas) => {
         let photos = []
@@ -246,7 +258,7 @@ const getPlacesTextSearch = async (data) => {
           }
         })
       }
-    )
+    ).catch(err => console.log('Lỗi ở gọi api để là photos => base64', err))
 
     const location = {
       lat: data.location.latitude,
@@ -288,90 +300,105 @@ const getPlaceDetails = async (data) => {
   console.log('🚀 ~ file: map.service.js:256 ~ getPlaceDetails ~ data:', data)
   try {
     let placeTranform
+    let placeTranformReturn
     // Kiểm tra trong database xem có place_id này chưa
     const existPlace = await MapModel.findOneByPlaceId(data.placeId)
+    console.log('🚀 ~ file: map.service.js:294 ~ getPlaceDetails ~ existPlace:', existPlace)
     if (!existPlace) {
       // Lấy dữ về place details trên google map
       const result = await PlacesSearchProvider.getPlaceDetailsAPI({
         place_id: data.placeId
       })
 
-      placeTranform = result.result
+      placeTranform = cloneDeep(result.result)
+      placeTranformReturn = cloneDeep(result.result)
 
       // Biến đổi các photo có Db thành img64
       // Có thể xảy ra TH là không có photos nữa nên cần phải check kỹ
-      if (placeTranform.photos) {
+      const photosClone = cloneDeep(placeTranform.photos)
+      delete placeTranform.photos
+      if (photosClone) {
         let photosReference = []
 
-        placeTranform.photos.map(photo => photosReference.push(photo.photo_reference))
+        photosClone.map(photo => photosReference.push({
+          height:  Math.floor(photo.height),
+          width:  Math.floor(photo.width),
+          photo_reference: photo.photo_reference
+        }))
 
         // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
         await axios.all(
-          photosReference.map(async photoReference => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoReference}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
+          photosReference.map( photoReference => axios.get(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=${photoReference.width}&maxheight=${photoReference.height}&photo_reference=${photoReference.photo_reference}&key=${env.MAP_API_KEY}`, { responseType: 'arraybuffer' }))
         ).then(
-          (datas) => {
-            let photos = []
-            datas.map(res => {
-              const urlBase64Decode = Buffer.from(res.data, 'binary').toString('base64')
-              photos.push(urlBase64Decode)
+          async (datas) => {
+            let photoBuffers = []
+            datas.map(res => photoBuffers.push(res.data))
+            console.log('số photos của place photos buffer:', photoBuffers.length)
+
+            let resPhotos = await CloudinaryProvider.streamUploadMutiple(photoBuffers, 'place_photos')
+            let photosUrlToUpdate = []
+
+            resPhotos.map(res => photosUrlToUpdate.push(res.url))
+            console.log('Số photos của place photos khi đẩy lên cloudinary:', photosUrlToUpdate.length)
+            // photosToUpdate sẽ cập nhật vào database
+            // Không cần chờ nào xong nó tự create trong DB
+            const photosUpdated = await PhotosModel.createNew({
+              place_photos_id: placeTranform.place_id,
+              photos: photosUrlToUpdate
             })
-            if (photos.length > 0)
-              placeTranform.photos = photos
+            //  thêm trường photoId trong
+            placeTranform.photos_id = photosUpdated.insertedId.toString()
+            placeTranformReturn.photos = photosUrlToUpdate
+
           }
-        )
+        ).catch(err => console.log(err))
       }
 
-      if (placeTranform.reviews) {
+      const reviewsClone = cloneDeep(placeTranform.reviews)
+      delete placeTranform.reviews
+      if (reviewsClone) {
         let profilePhotosReference = []
-        placeTranform.reviews.map(review => profilePhotosReference.push(review.profile_photo_url))
-
+        reviewsClone.map(review => profilePhotosReference.push(review.profile_photo_url))
         // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
         await axios.all(
-          profilePhotosReference.map(async photoReference => axios.get(photoReference, { responseType: 'arraybuffer' }))
+          profilePhotosReference.map( photoReference => axios.get(photoReference, { responseType: 'arraybuffer' }))
         ).then(
-          (datas) => {
-            let photos = []
-            datas.map(res => {
-              const urlBase64Decode = Buffer.from(res.data, 'binary').toString('base64')
-              photos.push(urlBase64Decode)
+          async (datas) => {
+            let photoBuffers = []
+            datas.map(res => photoBuffers.push(res.data))
+            console.log('số photos của place reviews buffer:', photoBuffers.length)
+
+            let resPhotos = await CloudinaryProvider.streamUploadMutiple(photoBuffers, 'place_reviews')
+            console.log('Số photos của place reviews khi đẩy lên cloudinary:', resPhotos.length)
+
+            reviewsClone.map((review, index) => review.profile_photo_url = resPhotos[index].url)
+
+
+            // photosToUpdate sẽ cập nhật vào database
+            const photosUpdated = await ReviewsModel.createNew({
+              place_reviews_id: placeTranform.place_id,
+              reviews: reviewsClone
             })
-            // console.log('🚀 ~ file: map.service.js:76 ~ createPlacesQueue.process ~ photos', photos)
-            // đã có photos thì đề lên thằng photo trong kết quả trả về
-            if (photos.length > 0) {
-              photos.map((pt, index) => {
-                placeTranform.reviews[index].profile_photo_url = pt
-              })
-            }
+            //  thêm trường photoId trong placeTranform
+            placeTranform.reviews_id = photosUpdated.insertedId.toString()
+            placeTranformReturn.reviews = reviewsClone
           }
-        )
+        ).catch(err => console.log(err))
       }
       // Phuong: oke lưu vào db thôi. Không cần đợi
-      // MapModel.createNew(placeTranform)
+      console.log('🚀 ~ file: map.service.js:373 ~ getPlaceDetails ~ placeTranform:', placeTranform)
+      MapModel.createNew(placeTranform)
     } else {
-      placeTranform = existPlace
+      placeTranformReturn = existPlace
+      // bây giờ trong placeTranformReturn thiếu photos với reviews nên lấy hai thằng đó về thông qua place_id
+      const photosReturn = await PhotosModel.findOneByPlaceId(placeTranformReturn.place_id)
+      const reviewsReturn = await ReviewsModel.findOneByPlaceId(placeTranformReturn.place_id)
+      placeTranformReturn.photos = photosReturn.photos
+      placeTranformReturn.reviews = reviewsReturn.reviews
     }
     // Sau đó trả về cho user thoy
-    return placeTranform
+    return placeTranformReturn
 
-  } catch (error) {
-    // console.log(error)
-    throw new Error(error)
-  }
-}
-
-const getDirectionsORS = async (data) => {
-  // data có dạng:
-  // data = {
-  //   start: [18.21834812848, 67.2194214],
-  //   end: [19.21834812848, 68.2194214],
-  //   profile: 'driving-car'
-  // }
-
-  console.log('🚀 ~ file: map.service.js:256 ~ getPlaceDetails ~ data:', data)
-  try {
-    data.api_key = env.ORS_API_KEY1
-    const result = await OpenRouteServiceProvider.getDirectionsORS(data)
-    return result
   } catch (error) {
     // console.log(error)
     throw new Error(error)
@@ -380,6 +407,5 @@ const getDirectionsORS = async (data) => {
 
 export const MapService = {
   getPlacesTextSearch,
-  getPlaceDetails,
-  getDirectionsORS
+  getPlaceDetails
 }
