@@ -30,6 +30,7 @@ const privateKeys = async (req, res) => {
 const getPlaceDetails = async (req, res) => {
   try {
     const result = await MapService.getPlaceDetails(req.body)
+    console.log('====================================================================================================================================\n', result.place_id)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -38,6 +39,38 @@ const getPlaceDetails = async (req, res) => {
   }
 }
 
+const getWeatherCurrent = async (req, res) => {
+  try {
+    const result = await MapService.getWeatherCurrent(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const getWeatherForecast = async (req, res) => {
+  try {
+    const result = await MapService.getWeatherForecast(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const getGeocodingReverse = async (req, res) => {
+  try {
+    const result = await MapService.getGeocodingReverse(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 // const createNew = async (req, res) => {
 //   try {
 //     const result = await MapService.createNew(req.body)
@@ -66,7 +99,10 @@ const getPlaceDetails = async (req, res) => {
 export const MapController = {
   getPlacesTextSearch,
   privateKeys,
-  getPlaceDetails
+  getPlaceDetails,
+  getWeatherCurrent,
+  getWeatherForecast,
+  getGeocodingReverse
   // createNew,
   // update,
 }

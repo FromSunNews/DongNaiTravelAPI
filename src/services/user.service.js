@@ -223,6 +223,7 @@ const resetPassword = async (data) => {
 }
 
 const update = async ( userId, data, userAvatarFile ) => {
+  console.log('🚀 ~ file: user.service.js:226 ~ update ~ data:', data)
   try {
     let updatedUser = {}
     let shouldUpdateCardComments = false
@@ -303,6 +304,55 @@ const update = async ( userId, data, userAvatarFile ) => {
   }
 }
 
+const updateMap = async (data) => {
+  console.log('🚀 ~ file: user.service.js:308 ~ updateMap ~ data:', data)
+  try {
+    let existUser
+
+    if (data.currentUserId)
+      existUser = await UserModel.findOneById(data.currentUserId)
+
+    if (!existUser) {
+      throw new Error('User does not exsist.')
+    }
+
+    delete data.currentUserId
+
+    console.log('🚀 ~ file: user.service.js:328 ~ updateMap ~ data:', data)
+    const updatedUser = await UserModel.update(existUser._id.toString(), data)
+    console.log('🚀 ~ file: user.service.js:323 ~ updateMap ~ updatedUser:', updatedUser)
+
+    return updatedUser
+
+  } catch (error) {
+    console.log('🚀 ~ file: user.service.js:328 ~ updateMap ~ error:', error)
+    throw new Error(error)
+  }
+}
+
+const getMap = async (data) => {
+  console.log('🚀 ~ file: user.service.js:334 ~ getMap ~ getMap:', getMap)
+  try {
+    let existUser
+
+    if (data.currentUserId)
+      existUser = await UserModel.findOneById(data.currentUserId)
+    console.log('🚀 ~ file: user.service.js:339 ~ getMap ~ existUser:', existUser)
+
+    if (!existUser) {
+      throw new Error('User does not exsist.')
+    }
+
+    return {
+      places: existUser.savedPlaces,
+      suggestions: existUser.savedSuggestions
+    }
+
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const UserService = {
   createNew,
   signIn,
@@ -310,5 +360,7 @@ export const UserService = {
   update,
   sendOtp,
   verifyOtp,
-  resetPassword
+  resetPassword,
+  getMap,
+  updateMap
 }

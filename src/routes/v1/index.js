@@ -4,6 +4,7 @@ import { HttpStatusCode } from '*/utilities/constants'
 import { userRoutes } from './user.route'
 import { mapRoutes } from './map.route'
 import { directionRoutes } from './direction.route'
+import { contentRoutes } from './content.route'
 
 const router = express.Router()
 
@@ -20,5 +21,8 @@ router.use('/map', mapRoutes)
 
 /** Direction APIs */
 router.use('/direction', directionRoutes)
+
+/** content APIs */
+router.use('/content', contentRoutes)
 
 export const apiV1 = router

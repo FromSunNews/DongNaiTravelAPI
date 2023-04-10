@@ -10,6 +10,11 @@ const mapCollectionSchema = Joi.object({
   photos_id: Joi.string().default(null),
   // get _id in reviews collection
   reviews_id: Joi.string().default(null),
+  // get _id in reviews collection
+  content_id: Joi.string().default(null),
+
+  isRecommended: Joi.boolean().default(false),
+  numberOfVisited: Joi.number().default(0),
 
   reference: Joi.string().default(null),
 
@@ -117,8 +122,8 @@ const createNew = async (data) => {
   }
 }
 
-// Phuong: Cập nhật map thông qua _id
-const update = async (id, data) => {
+// Phuong: Cập nhật map thông qua place_id
+const updateByPlaceId = async (place_id, data) => {
   try {
     const updateData = { ...data }
 
@@ -130,8 +135,7 @@ const update = async (id, data) => {
     })
 
     const result = await getDB().collection(mapCollectionName).findOneAndUpdate(
-      // Phuong: Phải chuyển _id ở client thành ObjectId
-      { _id: new ObjectId(id) },
+      { place_id: place_id },
       { $set: updateData },
       { returnDocument: 'after' }
     )
@@ -158,7 +162,7 @@ const createManyPlaces = async (places) => {
 export const MapModel = {
   mapCollectionName,
   createNew,
-  update,
+  updateByPlaceId,
   findOneById,
   findOneByPlaceId,
   createManyPlaces

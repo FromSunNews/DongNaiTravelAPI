@@ -35,4 +35,11 @@ router.route('/reset_password')
 
 router.route('/private_keys')
   .get(UserController.privateKeys)
+
+router.route('/get_map_user')
+  .post(UserController.getMap)
+
+router.route('/update_map_user')
+  .post(UserController.updateMap)
+
 export const userRoutes = router

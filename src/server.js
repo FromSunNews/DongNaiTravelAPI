@@ -6,7 +6,7 @@ import cors from 'cors'
 import socketIo from 'socket.io'
 import http from 'http'
 import { trackingUserLocationCurrent } from './sockets/directionSocket'
-import polyline from '@mapbox/polyline'
+import { createTravelItinerary } from './sockets/itinerarySocket'
 
 connectDB()
   .then(() => console.log('Connected successfully to database server!'))
@@ -48,20 +48,16 @@ const bootServer = () => {
     //, còn đói với người mà chưa đăng nhập thì sẽ tạo id ngẫu nhiên để nhận biết
     socket.on('c_user_login', (accountId) => {
       console.log('Client Connected', accountId)
-      // chuỗi tọa độ trong trường points của Google Directions API
-      const encodedPoints = 'm{`aAmbyiSaA~@{B`CsGlHwB~ByC|CiA~@{@l@sErCsOxIen@j]qIzE{FxCoBdAqAf@o@Zq@b@wAbA}A`AoEfC[LQDgBbAwGtDiLnGaKrF}HpEeB~@oHfEeEzBwEpCyG`EqR~LcF~Cg_@|U}NjJim@x_@KMoK`HuCfB{CjBuEtCiDvByC`B`@VNP?L^fAd@zAP~@LpDDf@DZTj@l@p@n@b@t@`@nB`A~CzAtBbAzChCrAvAhF|FrCbD`@j@~CjGtBjEhB`DdEpIbC`GtBtEVr@T~@b@tCVxBhAvH~@lG\\~Br@vCnAfEnBdG|AzFbCrHd@xAnBtGr@tBEf@o@lIe@hEmBtTQvAMdBkAfPO|C[nDmAjQi@fHQ`Da@bFY`Cc@nDe@fEq@xF[pDShBShAwAbMyBfRaA|IM`AoAnKoAvLmEh`@yBlR]zCUhAC?E@IFCN@PBDIpBu@bGmAbL[lDEnADjANnA^nAnB~DxB~DPNR`@vCdFbBbDpBvD^h@tA~AfEhE~A|AdDpDrEzEdCfC|GpGhNnLnGvFdBtA~HzGv@p@|HtGpBbB|@~@v@p@tGpFzJlIzExD`JdI~BhBfHrGfAz@|JnIdK`J`BnA`J|HnAjAvC|CnFbGnMrNzDjEhAnApDxDl@n@|BpBjCjBbC|AFNdCbBjEbCtJzEzFbDzDfCfAv@tCjBbC`BzGxE`Al@fAr@hBnAfAv@`Ar@ZLPLvB|AxClB`HtEv@?jA?`If@lBN\\Fz@^r@j@nKhLnb@zd@jNpOrN|O`b@ne@pIxJPr@Cv@Sj@Qx@a@nCaAxEWrAg@nCe@zBuBbFWd@mAbCu@|AYp@fJfChEjArPzErMxDzNdE`Bd@bAb@h@XtDdDlIdIdNrMzCvCvEtE|FrF`DtCrCnCfDbD`A`AdAdAb@\\vCpCr@r@xCvCtGfGjBfBxCzC`EpFnCtDbHrJhP|ThOtSvUv[xShYlIfLzFfIlJjMrEfGvL`Q~TrZvI|LhCjD|KfOzc@hm@lRlWnEjGtNxRtIlLhCpDv@|AdArAzBxC|LhPnGpIhFhHjE~FpHbKrArBrAvCl@jAfDtHjBfE~@`Cv@pBzCbGhBvDn@zAh@t@jDbFRXfCrDnA`BpBlCpD`Ft@dA|AlBlApA|ArArA~@jGnDrDvBlBhAhBrA~@|@zCrDhBtBrJ`LjC`DhApBh@vATzANzE`@pVNfIPhILbHBdFRvKd@pUXrPRrK`Ade@^vQVnPXlOZhUZfPLzEt@`a@l@rYLhIHhHFzBHlDRbJLrHdA|i@L~H'
 
-      // giải mã chuỗi tọa độ
-      const decodedPoints = polyline.decode(encodedPoints)
-
-      // in ra tọa độ được giải mã
-      console.log(decodedPoints.length)
       // lưu socket ID của tài khoản đăng nhập vào biến socketIdMap
       socketIdMap[accountId] = socket.id
     })
 
     // hàm xử lý thay đổi vị trí
     trackingUserLocationCurrent(io, socket, socketIdMap)
+
+    // Hàm xử lý tạo lịch trình cho user
+    createTravelItinerary(io, socket, socketIdMap)
 
     socket.on('disconnect', () => {
       console.log('🚀 ~ file: server.js:59 ~ socket.on ~ socketIdMap:', socketIdMap)

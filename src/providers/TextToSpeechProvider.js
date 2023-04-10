@@ -2,6 +2,7 @@ import axios from 'axios'
 import { env } from '*/config/environtment'
 
 const generateSpeech = async (data) => {
+  console.log('🚀 ~ file: TextToSpeechProvider.js:5 ~ generateSpeech ~ data:', data)
   // data có dạng:
   // data: {
   //   languageCode: 'en-US',

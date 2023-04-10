@@ -73,7 +73,9 @@ const update = async (req, res, next) => {
   const condition = Joi.object({
     displayName: Joi.string().trim(),
     currentPassword: Joi.string().pattern(PASSWORD_RULE).message('Current Password is invalid'),
-    newPassword: Joi.string().pattern(PASSWORD_RULE).message('New Password is invalid')
+    newPassword: Joi.string().pattern(PASSWORD_RULE).message('New Password is invalid'),
+    savedSuggestions: Joi.string().trim(),
+    savedPlaces: Joi.string().trim()
   })
   try {
     await condition.validateAsync(req.body, {
