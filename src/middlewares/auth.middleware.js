@@ -1,6 +1,6 @@
-import { env } from '*/config/environtment'
-import { JwtProvider } from '*/providers/JwtProvider'
-import { HttpStatusCode } from '*/utilities/constants'
+import { env } from 'config/environtment'
+import { JwtProvider } from 'providers/JwtProvider'
+import { HttpStatusCode } from 'utilities/constants'
 
 const isAuthorized = async (req, res, next) => {
   const clientAccessToken = req.body?.accessToken

@@ -57,3 +57,27 @@ export const sortByRatingHighToLow = (arrPlaceTextSearch) => {
 
   return arrPlaceTextSearch
 }
+
+/**
+ * Hàm này nhận vào 2 tham số là `fields` và `seperator` (không bắt buộc), đều là string.
+ * `fields` là một string có dạng `"field_1;field_2;...;field_n"`.
+ *
+ * Và hàm này sẽ trả về một object bao gồm các thuộc tính là field name được ngăn cách bởi
+ * `seperator` trong `fields` với value là `true`.
+ * @param {string} fields Là một chuỗi có dạng `"field_1;field_2;...;field_n"`.
+ * @param {string} seperator Là chuỗi, ký tự ngăn cách giữa các field name.
+ * @returns {{[key: string]: true}}
+ *
+ * @example
+ * ...
+ * let fields = "name;age;address"
+ * // Output:
+ * // {name: true, age: true, address: true}
+ * console.log(getExpectedFieldsOption(fields));
+ * ...
+ */
+export const getExpectedFieldsProjection = (fields, seperator = ';') => {
+  if (!fields) return {}
+  let fieldsArr = fields.split(seperator).map(field => [field, true])
+  return Object.fromEntries(fieldsArr)
+}

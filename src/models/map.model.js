@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
-import { getDB } from '*/config/mongodb'
+import { getDB } from 'config/mongodb'
 
 // Define Map collection
 const mapCollectionName = 'maps'
@@ -110,6 +110,27 @@ const findOneByPlaceId = async (place_id) => {
   }
 }
 
+// Tuan: Lấy tất cả các dữ liệu của places, có giới hạn.
+/**
+ * Method này dùng để trả về một mảng dữ liệu của places. Có filter, limit và skip. Ngoài ra
+ * thì có thể yêu cầu các trường dữ liệu cần trả về.
+ * @param {{[key: string]: string}} filter Object chứa các filter theo tiêu chuẩn của mongo, nhưng đồng thời cũng phải thỏa scheme của Place.
+ * @param {{[key: string]: string}} fields Object chứa các field-true để lấy các trường dữ liệu mong muốn.
+ * @param {number} limit Số records giới hạn được trả về.
+ * @param {number} skip Số records muốn mongo bỏ qua.
+ * @returns
+ */
+const findManyInLimit = async (filter, fields, limit = 10, skip = 0) => {
+  try {
+    console.log(fields)
+    const cursor = getDB().collection(mapCollectionName).find(filter, { projection: fields }).limit(limit).skip(skip)
+    const result = await cursor.toArray()
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 // Phương: tạo mới map
 const createNew = async (data) => {
   try {
@@ -165,6 +186,7 @@ export const MapModel = {
   updateByPlaceId,
   findOneById,
   findOneByPlaceId,
+  findManyInLimit,
   createManyPlaces
 }
 

@@ -1,9 +1,9 @@
 import Joi from 'joi'
-import { HttpStatusCode } from '*/utilities/constants'
+import { HttpStatusCode } from 'utilities/constants'
 import {
   EMAIL_RULE,
   PASSWORD_RULE
-} from '*/utilities/validators'
+} from 'utilities/validators'
 
 const createNew = async (req, res, next) => {
   const condition = Joi.object({

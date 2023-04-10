@@ -1,6 +1,6 @@
 import { findNearest, getDistance } from 'geolib'
-import { OpenRouteServiceProvider } from '../providers/OpenRouteServiceProvider'
-import { env } from '*/config/environtment'
+import { OpenRouteServiceProvider } from 'providers/OpenRouteServiceProvider'
+import { env } from 'config/environtment'
 
 export const trackingUserLocationCurrent = (io, socket, socketIdMap) => {
   socket.on('c_tracking_user_location_current', async (data) => {

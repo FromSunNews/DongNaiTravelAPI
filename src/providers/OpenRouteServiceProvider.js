@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 // Phuong: https://developers.google.com/maps/documentation/places/web-service/search-text
 const getDirectionsORS = async (params) => {

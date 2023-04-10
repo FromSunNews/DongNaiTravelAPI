@@ -1,12 +1,12 @@
 import express from 'express'
-import { connectDB } from '*/config/mongodb'
-import { env } from '*/config/environtment'
-import { apiV1 } from '*/routes/v1'
+import { connectDB } from 'config/mongodb'
+import { env } from 'config/environtment'
+import { apiV1 } from 'routes/v1'
 import cors from 'cors'
 import socketIo from 'socket.io'
 import http from 'http'
-import { trackingUserLocationCurrent } from './sockets/directionSocket'
-import { createTravelItinerary } from './sockets/itinerarySocket'
+import { trackingUserLocationCurrent } from 'sockets/directionSocket'
+import { createTravelItinerary } from 'sockets/itinerarySocket'
 
 connectDB()
   .then(() => console.log('Connected successfully to database server!'))

@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
-import { getDB } from '*/config/mongodb'
+import { getDB } from 'config/mongodb'
 
 // Define User collection
 const userCollectionName = 'users'

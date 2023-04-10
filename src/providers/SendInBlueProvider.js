@@ -2,7 +2,7 @@
 // https://levelup.gitconnected.com/how-to-send-emails-from-node-js-with-sendinblue-c4caacb68f31
 
 import SibApiV3Sdk from 'sib-api-v3-sdk'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 const defaultClient = SibApiV3Sdk.ApiClient.instance
 const apiKey = defaultClient.authentications['api-key']

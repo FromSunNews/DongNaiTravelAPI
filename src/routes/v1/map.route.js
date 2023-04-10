@@ -1,8 +1,11 @@
 import express from 'express'
-import { MapController } from '*/controllers/map.controller'
-import { MapValidation } from '*/validations/map.validation'
+import { MapController } from 'controllers/map.controller'
+import { MapValidation } from 'validations/map.validation'
 
 const router = express.Router()
+
+router.route('/places')
+  .post(MapController.getPlaces)
 
 router.route('/places_text_search')
   .post(MapValidation.getPlacesTextSearch, MapController.getPlacesTextSearch)

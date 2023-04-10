@@ -3,9 +3,7 @@
   "plugins": [
     ["@babel/plugin-transform-runtime"],
     ["module-resolver", {
-      "alias": {
-        "*": "./src"
-      }
+      "root": ["./src"]
     }]
   ]
 }

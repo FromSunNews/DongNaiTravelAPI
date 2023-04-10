@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { env } from '*/config/environtment'
-import { MapApiStatus } from '../utilities/constants'
+import { env } from 'config/environtment'
+import { MapApiStatus } from 'utilities/constants'
 
 // Lấy place_id dựa trên tọa độ
 async function getPlaceIdFromCoords(latitude, longitude) {

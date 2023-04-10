@@ -1,5 +1,5 @@
-import { HttpStatusCode } from '*/utilities/constants'
-import { ContentService } from '*/services/content.service'
+import { HttpStatusCode } from 'utilities/constants'
+import { ContentService } from 'services/content.service'
 
 const createNew = async (req, res) => {
   try {
