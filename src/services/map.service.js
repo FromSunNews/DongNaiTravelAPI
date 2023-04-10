@@ -14,6 +14,7 @@ import { OpenRouteServiceProvider } from '../providers/OpenRouteServiceProvider'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider'
 import { PhotosModel } from '../models/photos.model'
 import { ReviewsModel } from '../models/reviews.model'
+import { OpenWeatherProvider } from '../providers/OpenWeatherProvider'
 
 const getPlacesTextSearch = async (data) => {
   console.log('🚀 ~ file: map.service.js:14 ~ getPlacesTextSearch ~ data', data)
@@ -386,15 +387,19 @@ const getPlaceDetails = async (data) => {
         ).catch(err => console.log(err))
       }
       // Phuong: oke lưu vào db thôi. Không cần đợi
-      console.log('🚀 ~ file: map.service.js:373 ~ getPlaceDetails ~ placeTranform:', placeTranform)
       MapModel.createNew(placeTranform)
     } else {
+      console.log('Nơi này đã tồn tại!')
       placeTranformReturn = existPlace
       // bây giờ trong placeTranformReturn thiếu photos với reviews nên lấy hai thằng đó về thông qua place_id
       const photosReturn = await PhotosModel.findOneByPlaceId(placeTranformReturn.place_id)
+      // console.log('🚀 ~ file: map.service.js:396 ~ getPlaceDetails ~ photosReturn:', photosReturn)
       const reviewsReturn = await ReviewsModel.findOneByPlaceId(placeTranformReturn.place_id)
-      placeTranformReturn.photos = photosReturn.photos
-      placeTranformReturn.reviews = reviewsReturn.reviews
+      // console.log('🚀 ~ file: map.service.js:398 ~ getPlaceDetails ~ reviewsReturn:', reviewsReturn)
+      if (photosReturn)
+        placeTranformReturn.photos = photosReturn.photos
+      if (reviewsReturn)
+        placeTranformReturn.reviews = reviewsReturn.reviews
     }
     // Sau đó trả về cho user thoy
     return placeTranformReturn
@@ -405,7 +410,110 @@ const getPlaceDetails = async (data) => {
   }
 }
 
+const getWeatherCurrent = async (data) => {
+  console.log('🚀 ~ file: map.service.js:420 ~ getWeatherCurrent ~ data:', data)
+  // data = {
+  //   longitude: '',
+  //   latitude: ''
+  // }
+  try {
+    const weatherData = await OpenWeatherProvider.getWeatherCurrent(data)
+    return weatherData
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getWeatherForecast = async (data) => {
+  console.log('🚀 ~ file: map.service.js:420 ~ getWeatherForecast ~ data:', data)
+  // data = {
+  //   longitude: '',
+  //   latitude: ''
+  // }
+  try {
+
+    // https://blog.logrocket.com/using-axios-all-make-concurrent-requests/
+    const promises = []
+    let result = {}
+    // Duyệt qua các ID và thêm vào danh sách promise
+    for (let i=0; i<3; i++) {
+      let promise
+
+      if (i === 0) {
+        const params = {
+          lat: data.latitude,
+          lon: data.longitude,
+          units: 'metric',
+          lang: env.LANGUAGE_CODE_DEFAULT,
+          appid: env.OPEN_WEATHER_API_KEY
+        }
+
+        promise = axios.get(`${env.OPEN_WEATHER_BASE_URL}/data/2.5/weather`, { params })
+      } else if (i === 1) {
+        const params = {
+          lat: data.latitude,
+          lon: data.longitude,
+          limit: 1,
+          appid: env.OPEN_WEATHER_API_KEY
+        }
+
+        promise = axios.get(`${env.OPEN_WEATHER_BASE_URL}/geo/1.0/reverse`, { params })
+      } else {
+        const params = {
+          lat: data.latitude,
+          lon: data.longitude,
+          units: 'metric',
+          cnt: 40, // number of list (maximum 40 item ~ 5 days)
+          lang: env.LANGUAGE_CODE_DEFAULT,
+          appid: env.OPEN_WEATHER_API_KEY
+        }
+
+        promise = axios.get(`${env.OPEN_WEATHER_BASE_URL}/data/2.5/forecast`, { params })
+      }
+
+      promises.push(promise)
+    }
+
+    await axios.all(promises).then((responses) => {
+      responses.map((res, index) => {
+        if (index === 0) {
+          // dữ liệu weather hiện tại
+          result.weatherCurrent = res.data
+        } else if (index === 1) {
+          // geocoding reverse location
+          result.nameGeocoding = res.data[0].name
+        } else {
+          // weather forecast
+          result.weatherForecast = res.data.list
+        }
+      })
+    }
+    ).catch(err => console.log('Lỗi ở gọi api openweather', err))
+
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getGeocodingReverse = async (data) => {
+  console.log('🚀 ~ file: map.service.js:420 ~ getGeocodingReverse ~ data:', data)
+  // data = {
+  //   longitude: '',
+  //   latitude: ''
+  // }
+  try {
+    const weatherData = await OpenWeatherProvider.getGeocodingReverse(data)
+    return weatherData
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const MapService = {
   getPlacesTextSearch,
-  getPlaceDetails
+  getPlaceDetails,
+  getWeatherCurrent,
+  getWeatherForecast,
+  getGeocodingReverse
 }

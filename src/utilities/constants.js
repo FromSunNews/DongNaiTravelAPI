@@ -38,3 +38,38 @@ export const FilterConstants = {
     LEVEL_5: 'LEVEL_5'
   }
 }
+
+export const TextToSpeechConstants = {
+  VN_FEMALE_1: {
+    languageCode: 'vi',
+    name: 'vi-VN-Standard-C'
+  },
+  VN_FEMALE_2: {
+    languageCode: 'vi',
+    name: 'vi-VN-Standard-A'
+  },
+  VN_MALE_1: {
+    languageCode: 'vi',
+    name: 'vi-VN-Standard-B'
+  },
+  VN_MALE_2: {
+    languageCode: 'vi',
+    name: 'vi-VN-Standard-D'
+  },
+  EN_FEMALE_1: {
+    languageCode: 'en',
+    name: 'en-US-Standard-H'
+  },
+  EN_FEMALE_2: {
+    languageCode: 'en',
+    name: 'en-US-Standard-F'
+  },
+  EN_MALE_1: {
+    languageCode: 'en',
+    name: 'en-US-Standard-D'
+  },
+  EN_MALE_2: {
+    languageCode: 'en',
+    name: 'en-US-Standard-I'
+  }
+}

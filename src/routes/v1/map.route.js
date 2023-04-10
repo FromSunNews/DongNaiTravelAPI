@@ -13,5 +13,14 @@ router.route('/place_details')
 router.route('/private_keys')
   .get(MapController.privateKeys)
 
+router.route('/weather_current')
+  .post(MapController.getWeatherCurrent)
+
+router.route('/weather_forecast')
+  .post(MapController.getWeatherForecast)
+
+router.route('/geocoding_reverse')
+  .post(MapController.getGeocodingReverse)
+
 
 export const mapRoutes = router

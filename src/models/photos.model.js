@@ -12,7 +12,7 @@ const photosCollectionSchema = Joi.object({
 })
 
 // Phuong: Đây là những trường không được update (giá trị cố định không đổi)
-const INVALID_UPDATE_FILEDS = ['_id', 'createdAt']
+const INVALID_UPDATE_FILEDS = ['_id', 'place_photos_id', 'createdAt']
 
 // Phuong: Tạo Schema để mongodb biết tạo bảng ntn
 const validateSchema = async (data) => {

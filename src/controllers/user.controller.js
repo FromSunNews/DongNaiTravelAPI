@@ -121,6 +121,32 @@ const update = async (req, res) => {
   }
 }
 
+const getMap = async (req, res) => {
+  try {
+    const result = await UserService.getMap(req.body)
+    console.log('🚀 ~ file: user.controller.js:127 ~ getMap ~ result:', result)
+
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const updateMap = async (req, res) => {
+  try {
+    const result = await UserService.updateMap(req.body)
+
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+
 export const UserController = {
   createNew,
   signIn,
@@ -130,5 +156,7 @@ export const UserController = {
   sendOtp,
   verifyOtp,
   resetPassword,
-  privateKeys
+  privateKeys,
+  getMap,
+  updateMap
 }

@@ -17,11 +17,11 @@ const userCollectionSchema = Joi.object({
     longitude: Joi.string().default(null),
     latitude: Joi.string().default(null)
   },
-  lovedPlaceIds: Joi.array().items(Joi.string()).default([]),
-  savedPlaceIds: Joi.array().items(Joi.string()).default([]),
-  lovedBlogIds: Joi.array().items(Joi.string()).default([]),
-  savedBlogIds: Joi.array().items(Joi.string()).default([]),
-  
+  savedSuggestions: Joi.array().items(Joi.string()).default([]),
+  savedPlaces: Joi.array().items(Joi.string()).default([]),
+  // lovedBlogIds: Joi.array().items(Joi.string()).default([]),
+  // savedBlogIds: Joi.array().items(Joi.string()).default([]),
+
   receivePoints: Joi.number().integer().default(0),
   lostPoints: Joi.number().integer().default(0),
   otpToken: Joi.string().default(null),
@@ -38,13 +38,13 @@ const validateSchema = async (data) => {
   return await userCollectionSchema.validateAsync(data, { abortEarly: false })
 }
 
-// Phuong: Tìm dựa trên id của user. 
+// Phuong: Tìm dựa trên id của user.
 const findOneById = async (id) => {
   try {
     const result = await getDB().collection(userCollectionName)
-    // Phuong: Bởi vì key _id trong mongodb đucợ luu ở dạng ObjectId nên phải 
+    // Phuong: Bởi vì key _id trong mongodb đucợ luu ở dạng ObjectId nên phải
     // Phuong: chuyển qua ObjectId từ phía client đẩy lên mới tìm được
-    .findOne({ _id: new ObjectId(id) })
+      .findOne({ _id: new ObjectId(id) })
     return result
   } catch (error) {
     throw new Error(error)
@@ -102,6 +102,7 @@ const update = async (id, data) => {
 
     return result.value
   } catch (error) {
+    console.log('🚀 ~ file: user.model.js:105 ~ update ~ error:', error)
     throw new Error(error)
   }
 }
