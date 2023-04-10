@@ -1,5 +1,5 @@
-import { MongoClient } from 'mongodb'
-import { env } from '*/config/environtment'
+import { MongoClient, Db } from 'mongodb'
+import { env } from 'config/environtment'
 
 let dbInstance = null
 
@@ -17,6 +17,10 @@ export const connectDB = async () => {
 }
 
 // Get Database Instance
+/**
+ *
+ * @returns {Db}
+ */
 export const getDB = () => {
   if (!dbInstance) throw new Error('Must connect to Database first!')
   return dbInstance

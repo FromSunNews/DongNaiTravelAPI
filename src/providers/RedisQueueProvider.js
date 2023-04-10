@@ -1,5 +1,5 @@
 import Queue from 'bull'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 // Sử dụng thư viện bull Khởi tạo một hàng đợi - queue
 // với quequeName do chúng ta tự định nghĩa

@@ -1,6 +1,6 @@
-import { HttpStatusCode } from '*/utilities/constants'
-import { UserService } from '*/services/user.service'
-import { env } from '*/config/environtment'
+import { HttpStatusCode } from 'utilities/constants'
+import { UserService } from 'services/user.service'
+import { env } from 'config/environtment'
 
 const createNew = async (req, res) => {
   try {

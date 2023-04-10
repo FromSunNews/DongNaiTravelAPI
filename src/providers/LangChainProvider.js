@@ -1,5 +1,5 @@
 
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 //Import the OpenAPI Large Language Model (you can import other models here eg. Cohere)
 // import { OpenAI } from 'langchain'
 // import { Configuration, OpenAIApi } from 'openai'

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 import { Configuration, OpenAIApi } from 'openai'
 

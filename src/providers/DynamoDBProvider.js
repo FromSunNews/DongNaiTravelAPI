@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 const getPlaceReviewsById = async (data) => {
   const request = await axios.get(`${env.PLACE_REVIEWS_API}`, data)

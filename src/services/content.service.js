@@ -1,11 +1,11 @@
-import { ContentModel } from '*/models/content.model'
-import { MapModel } from '*/models/map.model'
-import { RedisQueueProvider } from '*/providers/RedisQueueProvider'
+import { ContentModel } from 'models/content.model'
+import { MapModel } from 'models/map.model'
+import { RedisQueueProvider } from 'providers/RedisQueueProvider'
 
-import { env } from '*/config/environtment'
-import { TextToSpeechProvider } from '../providers/TextToSpeechProvider'
-import { TextToSpeechConstants } from '../utilities/constants'
-import { SendMessageToSlack } from '../providers/SendMessageToSlack'
+import { env } from 'config/environtment'
+import { TextToSpeechProvider } from 'providers/TextToSpeechProvider'
+import { TextToSpeechConstants } from 'utilities/constants'
+import { SendMessageToSlack } from 'providers/SendMessageToSlack'
 import axios from 'axios'
 import { cloneDeep } from 'lodash'
 

@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
-import { getDB } from '*/config/mongodb'
+import { getDB } from 'config/mongodb'
 
 // Define Content collection
 const contentCollectionName = 'content'

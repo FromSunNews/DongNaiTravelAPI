@@ -1,7 +1,7 @@
 
 import cloudinary from 'cloudinary'
 import streamifier from 'streamifier'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 /**
  * Tài liệu tham khảo:
  * https://cloudinary.com/blog/node_js_file_upload_to_a_local_server_or_to_the_cloud

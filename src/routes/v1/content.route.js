@@ -1,6 +1,6 @@
 import express from 'express'
-import { ContentController } from '*/controllers/content.controller'
-import { ContentValidation } from '*/validations/content.validation'
+import { ContentController } from 'controllers/content.controller'
+import { ContentValidation } from 'validations/content.validation'
 
 const router = express.Router()
 

@@ -1,20 +1,54 @@
-import { MapModel } from '*/models/map.model'
+import { MapModel } from 'models/map.model'
 
-import { PlacesSearchProvider } from '../providers/PlacesSearchProvider'
-import { SendMessageToSlack } from '../providers/SendMessageToSlack'
-import { RedisQueueProvider } from '*/providers/RedisQueueProvider'
+import { PlacesSearchProvider } from 'providers/PlacesSearchProvider'
+import { SendMessageToSlack } from 'providers/SendMessageToSlack'
+import { RedisQueueProvider } from 'providers/RedisQueueProvider'
 
-import { FilterConstants, MapApiStatus } from '../utilities/constants'
+import { FilterConstants, MapApiStatus } from 'utilities/constants'
+import { getExpectedFieldsProjection } from 'utilities/function'
 import axios from 'axios'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 import { Buffer } from 'buffer'
 import { cloneDeep, sortBy } from 'lodash'
-import { filterRadiusProminenceOrNearBy, sortByRatingHighToLow, sortByRatingLowToHigh, sortByStarHighToLow, sortByStarLowToHigh } from '../utilities/function'
-import { OpenRouteServiceProvider } from '../providers/OpenRouteServiceProvider'
-import { CloudinaryProvider } from '../providers/CloudinaryProvider'
-import { PhotosModel } from '../models/photos.model'
-import { ReviewsModel } from '../models/reviews.model'
-import { OpenWeatherProvider } from '../providers/OpenWeatherProvider'
+import { filterRadiusProminenceOrNearBy, sortByRatingHighToLow, sortByRatingLowToHigh, sortByStarHighToLow, sortByStarLowToHigh } from 'utilities/function'
+import { OpenRouteServiceProvider } from 'providers/OpenRouteServiceProvider'
+import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+import { PhotosModel } from 'models/photos.model'
+import { ReviewsModel } from 'models/reviews.model'
+import { OpenWeatherProvider } from 'providers/OpenWeatherProvider'
+
+/**
+ * @typedef GetPlacesServiceProps
+ * @property {number} limit
+ * @property {number} skip
+ * @property {string} fields
+ */
+
+/**
+ * Service này dùng để lấy ra tất cả các places, tuy nhiên là nên dùng nó để lấy một số lượng
+ * có hạn nào đó thôi.
+ * @param {GetPlacesServiceProps} data Là một object lấy từ `req.query`.
+ * @returns {Promise<WithId<Document>[] | undefined>}
+ */
+const getPlaces = async (data) => {
+  // Data của thằng này nó là query, không phải body.
+  /*
+    query = {
+      filter: "" Cái này rỗng bởi vì mình đang cần tìm tất cả. Nếu có thì chỉ có sort by thôi.
+      limit: 10,
+      skip: 0,
+      fields: "name;plus_code"
+    }
+  */
+  try {
+    let { limit, skip, fields } = data
+    console.log(data)
+    let places = await MapModel.findManyInLimit({}, getExpectedFieldsProjection(fields), parseInt(limit), parseInt(skip))
+    return places
+  } catch (error) {
+    return undefined
+  }
+}
 
 const getPlacesTextSearch = async (data) => {
   console.log('🚀 ~ file: map.service.js:14 ~ getPlacesTextSearch ~ data', data)
@@ -511,6 +545,7 @@ const getGeocodingReverse = async (data) => {
 }
 
 export const MapService = {
+  getPlaces,
   getPlacesTextSearch,
   getPlaceDetails,
   getWeatherCurrent,

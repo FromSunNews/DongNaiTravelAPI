@@ -1,5 +1,5 @@
 
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 import axios from 'axios'
 
 // https://openweathermap.org/current#data

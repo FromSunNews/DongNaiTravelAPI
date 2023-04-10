@@ -1,9 +1,9 @@
 import express from 'express'
-import { UserController } from '*/controllers/user.controller'
-import { UserValidation } from '*/validations/user.validation'
+import { UserController } from 'controllers/user.controller'
+import { UserValidation } from 'validations/user.validation'
 
-import { AuthMiddleware } from '*/middlewares/auth.middleware'
-import { UploadMiddleware } from '*/middlewares/upload.middleware'
+import { AuthMiddleware } from 'middlewares/auth.middleware'
+import { UploadMiddleware } from 'middlewares/upload.middleware'
 
 // console.log(UploadMiddleware)
 const router = express.Router()

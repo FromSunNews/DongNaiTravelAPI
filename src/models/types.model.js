@@ -1,6 +1,6 @@
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
-import { getDB } from '*/config/mongodb'
+import { getDB } from 'config/mongodb'
 
 // Define Types collection
 const typesCollectionName = 'types'

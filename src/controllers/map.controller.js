@@ -1,6 +1,23 @@
-import { HttpStatusCode } from '*/utilities/constants'
-import { MapService } from '*/services/map.service'
-import { env } from '*/config/environtment'
+import { Request, Response } from 'express'
+import { HttpStatusCode } from 'utilities/constants'
+import { MapService } from 'services/map.service'
+import { env } from 'config/environtment'
+
+/**
+ * @param {Request} req Object chứa headers và body của HTTPRequest.
+ * @param {Response} res Object chứa headers và payload của HTTPResponse.
+ * @returns
+ */
+const getPlaces = async (req, res) => {
+  try {
+    let result = await MapService.getPlaces(req.query)
+    return res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    return res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
 const getPlacesTextSearch = async (req, res) => {
   try {
@@ -97,6 +114,7 @@ const getGeocodingReverse = async (req, res) => {
 // }
 
 export const MapController = {
+  getPlaces,
   getPlacesTextSearch,
   privateKeys,
   getPlaceDetails,

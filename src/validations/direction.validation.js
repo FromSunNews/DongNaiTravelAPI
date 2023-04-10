@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import { HttpStatusCode } from '*/utilities/constants'
+import { HttpStatusCode } from 'utilities/constants'
 
 const routeDirection = async (req, res, next) => {
   const condition = Joi.object({

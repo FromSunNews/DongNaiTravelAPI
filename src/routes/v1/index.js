@@ -1,5 +1,5 @@
 import express from 'express'
-import { HttpStatusCode } from '*/utilities/constants'
+import { HttpStatusCode } from 'utilities/constants'
 
 import { userRoutes } from './user.route'
 import { mapRoutes } from './map.route'

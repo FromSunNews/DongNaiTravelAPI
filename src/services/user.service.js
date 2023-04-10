@@ -1,14 +1,14 @@
-import { UserModel } from '*/models/user.model'
+import { UserModel } from 'models/user.model'
 import bcryptjs from 'bcryptjs'
 import otpGenerator from 'otp-generator'
-import { SendInBlueProvider } from '*/providers/SendInBlueProvider'
-import { RedisQueueProvider } from '*/providers/RedisQueueProvider'
+import { SendInBlueProvider } from 'providers/SendInBlueProvider'
+import { RedisQueueProvider } from 'providers/RedisQueueProvider'
 
-import { pickUser } from '../utilities/transform'
-import { JwtProvider } from '../providers/JwtProvider'
-import { CloudinaryProvider } from '../providers/CloudinaryProvider'
-import { env } from '*/config/environtment'
-import { SendMessageToSlack } from '../providers/SendMessageToSlack'
+import { pickUser } from 'utilities/transform'
+import { JwtProvider } from 'providers/JwtProvider'
+import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+import { env } from 'config/environtment'
+import { SendMessageToSlack } from 'providers/SendMessageToSlack'
 
 const createNew = async (data) => {
   try {

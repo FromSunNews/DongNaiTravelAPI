@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { env } from '*/config/environtment'
+import { env } from 'config/environtment'
 
 // https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes?hl=vi
 const getComputeRoutesGCP = async (data) => {

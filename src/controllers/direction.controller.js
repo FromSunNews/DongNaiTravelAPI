@@ -1,5 +1,5 @@
-import { HttpStatusCode } from '*/utilities/constants'
-import { DirectionService } from '*/services/direction.service'
+import { HttpStatusCode } from 'utilities/constants'
+import { DirectionService } from 'services/direction.service'
 
 const getRouteDirection = async (req, res) => {
   try {
