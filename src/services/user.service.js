@@ -222,79 +222,53 @@ const resetPassword = async (data) => {
   }
 }
 
-const update = async ( userId, data, userAvatarFile ) => {
+const update = async (data) => {
   console.log('🚀 ~ file: user.service.js:226 ~ update ~ data:', data)
   try {
-    let updatedUser = {}
-    let shouldUpdateCardComments = false
+    let updatedUser
 
-    if (userAvatarFile) {
+    if (data.coverPhoto) {
+      // Chuyển base64 về buffer
+      const coverPhotoBuffer = Buffer.from(data.coverPhoto, 'base64')
       // Upload file len cloudinary
-      const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+      const uploadResult = await CloudinaryProvider.streamUpload(coverPhotoBuffer, 'users')
       // console.log(uploadResult)
+      console.log('🚀 ~ file: user.service.js:240 ~ update ~ uploadResult.url:', uploadResult.url)
 
-      updatedUser = await UserModel.update(userId, {
-        avatar: uploadResult.secure_url
+      updatedUser = await UserModel.update(data.currentUserId, {
+        coverPhoto: uploadResult.url
       })
+    } else if (data.avatar) {
+      // Chuyển base64 về buffer
+      const avatarBuffer = Buffer.from(data.avatar, 'base64')
+      // Upload file len cloudinary
+      const uploadResult = await CloudinaryProvider.streamUpload(avatarBuffer, 'users')
+      // console.log(uploadResult)
+      console.log('🚀 ~ file: user.service.js:240 ~ update ~ uploadResult.url:', uploadResult.url)
 
-      shouldUpdateCardComments = true
-
-    } else if (data.currentPassword && data.newPassword) {
-      // change password
-      const existUser = await UserModel.findOneById(userId)
-      if (!existUser) {
-        throw new Error('User not found.')
-      }
-      //Compare password
-      if (!bcryptjs.compareSync(data.currentPassword, existUser.password)) {
-        throw new Error('Your current password is incorrect!')
-      }
-
-      updatedUser = await UserModel.update(userId, {
-        password: bcryptjs.hashSync(data.newPassword, 8)
+      updatedUser = await UserModel.update(data.currentUserId, {
+        avatar: uploadResult.url
       })
-
-    } else {
-      // general info user
-      updatedUser = await UserModel.update(userId, data)
-      if (data.displayName) {
-        shouldUpdateCardComments = true
-      }
     }
+    // else if (data.currentPassword && data.newPassword) {
+    //   // change password
+    //   const existUser = await UserModel.findOneById(userId)
+    //   if (!existUser) {
+    //     throw new Error('User not found.')
+    //   }
+    //   //Compare password
+    //   if (!bcryptjs.compareSync(data.currentPassword, existUser.password)) {
+    //     throw new Error('Your current password is incorrect!')
+    //   }
 
-    // Chạy background job cho việc cập nhật rất nhiều bản ghi
-    // Background tasks: https://github.com/mkamrani/example-node-bull/blob/main/basic/index.js
-    if (shouldUpdateCardComments) {
-      // Bước 1: Khởi tạo một hàng đợi để cập nhật comment của nhiều card
-      let updatedCardCommentsQueue = RedisQueueProvider.generateQueue('updatedCardCommentsQueue')
-      // Bước 2: Định nghĩa ra những việc cần làm trong tiến trình hàng đợi
-      updatedCardCommentsQueue.process(async (job, done) => {
-        try {
-          // job.data ở đây chính là updatedUser được truyền vào từ bước 4
-          // const cardCommentsUpdated = await CardModel.updateManyComments(job.data)
-          done(null, cardCommentsUpdated)
-        } catch (error) {
-          done(new Error('Error from updatedCardCommentsQueue.process'))
-        }
-      })
-      // B3: Check completed hoặc failed, tùy trường hợp yêu cầu mà cần cái event này, để bắn thông báo khi job chạy xong chẳng hạn
-      // Nhiều event khác: https://github.com/OptimalBits/bull/blob/HEAD/REFERENCE.md#events
-      updatedCardCommentsQueue.on('completed', (job, result) => {
-        // Bắn kết quả về Slack
-        SendMessageToSlack.sendToSlack(`Job với id là: ${job.id} và tên job: *${job.queue.name}* đã *xong* và kết quả là: ${result}`)
-      })
+    //   updatedUser = await UserModel.update(userId, {
+    //     password: bcryptjs.hashSync(data.newPassword, 8)
+    //   })
 
-      updatedCardCommentsQueue.on('failed', (job, error) => {
-        // Bắn lỗi về Slack hoặc Telegram ...
-        SendMessageToSlack.sendToSlack(`Notification: Job với id là ${job.id} và tên job là *${job.queue.name}* đã bị *lỗi* \n\n ${error}`)
-      })
-
-      // Bước 4: bước quan trọng cuối cùng: Thêm vào vào đợi Redis để xử lý
-      updatedCardCommentsQueue.add(updatedUser, {
-        attempts: 3, // số lần thử lại nếu lỗi
-        backoff: 5000 //khoảng thời gian delay giữa các lần thử lại job
-      })
-
+    // }
+    else {
+      // general info user
+      updatedUser = await UserModel.update(data.currentUserId, data)
     }
 
     return pickUser(updatedUser)

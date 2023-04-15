@@ -11,6 +11,7 @@ const userCollectionSchema = Joi.object({
 
   displayName: Joi.string().required().min(2).max(30).trim(),
   avatar: Joi.string().default(null),
+  coverPhoto: Joi.string().default(null),
 
   role: Joi.string().default('client'),
   location: {

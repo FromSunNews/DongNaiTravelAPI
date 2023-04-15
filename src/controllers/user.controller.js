@@ -109,9 +109,9 @@ const resetPassword = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const userId = req.jwtDecoded._id
-    const userAvatarFile = req.file
-    const result = await UserService.update(userId, req.body, userAvatarFile)
+    // const userId = req.jwtDecoded._id
+
+    const result = await UserService.update(req.body)
 
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
