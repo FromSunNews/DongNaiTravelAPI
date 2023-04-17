@@ -110,6 +110,18 @@ const findOneByPlaceId = async (place_id) => {
   }
 }
 
+// Phuong: Tìm dựa trên place_id nhưng bắt đầu bằng kí tự 1 và kết thúc bằng kí tự 2
+const findOneByPlaceIdStartEnd = async (firstString, lastString) => {
+  try {
+    const regexPattern = new RegExp(`^${firstString}.*${lastString}$`)
+    const result = await getDB().collection(mapCollectionName).find({ place_id: { $regex: regexPattern } }).toArray()
+    console.log('🚀 ~ file: map.model.js:118 ~ findOneByPlaceIdStartEnd ~ result:', result)
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 // Tuan: Lấy tất cả các dữ liệu của places, có giới hạn.
 /**
  * Method này dùng để trả về một mảng dữ liệu của places. Có filter, limit và skip. Ngoài ra
@@ -185,6 +197,7 @@ export const MapModel = {
   createNew,
   updateByPlaceId,
   findOneById,
+  findOneByPlaceIdStartEnd,
   findOneByPlaceId,
   findManyInLimit,
   createManyPlaces
