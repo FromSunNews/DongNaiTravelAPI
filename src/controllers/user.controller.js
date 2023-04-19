@@ -146,6 +146,17 @@ const updateMap = async (req, res) => {
   }
 }
 
+const getInfoUser = async (req, res) => {
+  try {
+    const result = await UserService.getInfoUser(req.body)
+
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
 export const UserController = {
   createNew,
@@ -158,5 +169,6 @@ export const UserController = {
   resetPassword,
   privateKeys,
   getMap,
-  updateMap
+  updateMap,
+  getInfoUser
 }

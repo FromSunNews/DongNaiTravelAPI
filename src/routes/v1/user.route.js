@@ -45,4 +45,7 @@ router.route('/get_map_user')
 router.route('/update_map_user')
   .post(UserController.updateMap)
 
+router.route('/get_info_user')
+  .post(UserController.getInfoUser)
+
 export const userRoutes = router

@@ -5,6 +5,7 @@ import { userRoutes } from './user.route'
 import { mapRoutes } from './map.route'
 import { directionRoutes } from './direction.route'
 import { contentRoutes } from './content.route'
+import { notifRoutes } from './notif.route'
 
 const router = express.Router()
 
@@ -24,5 +25,8 @@ router.use('/direction', directionRoutes)
 
 /** content APIs */
 router.use('/content', contentRoutes)
+
+/** notif APIs */
+router.use('/notif', notifRoutes)
 
 export const apiV1 = router
