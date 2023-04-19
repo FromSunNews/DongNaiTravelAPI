@@ -9,6 +9,9 @@ import { JwtProvider } from 'providers/JwtProvider'
 import { CloudinaryProvider } from 'providers/CloudinaryProvider'
 import { env } from 'config/environtment'
 import { SendMessageToSlack } from 'providers/SendMessageToSlack'
+import { NotifModel } from 'models/notif.model'
+import axios from 'axios'
+import { cloneDeep } from 'lodash'
 
 const createNew = async (data) => {
   try {
@@ -85,8 +88,22 @@ const signIn = async (data) => {
       env.REFRESH_TOKEN_SECRET_LIFE,
       userInfoToStoreInJwtToken
     )
+    //
+    const fullInfoUser = await UserModel.getFullInfoUser(existUser._id.toString())
+    const notifs = cloneDeep(fullInfoUser.notifs)
+    delete fullInfoUser.notifs
     // Phuong: trả về cho client refreshToken vs accessToken để lưu vào Persist store
-    return { accessToken, refreshToken, ...pickUser(existUser) }
+
+    const result = {
+      fullInfoUser: {
+        accessToken,
+        refreshToken,
+        ...pickUser(fullInfoUser)
+      },
+      notifs: notifs
+    }
+    console.log('🚀 ~ file: user.service.js:105 ~ signIn ~ result:', result)
+    return result
 
   } catch (error) {
     throw new Error(error)
@@ -225,7 +242,7 @@ const resetPassword = async (data) => {
 const update = async (data) => {
   console.log('🚀 ~ file: user.service.js:226 ~ update ~ data:', data)
   try {
-    let updatedUser
+    let updatedUser, updatedUserFollowing
 
     if (data.coverPhoto) {
       // Chuyển base64 về buffer
@@ -249,6 +266,18 @@ const update = async (data) => {
       updatedUser = await UserModel.update(data.currentUserId, {
         avatar: uploadResult.url
       })
+    } else if (data.userReceivedId && data.userSentId && data.notifId) {
+      // 1. Updated cái thằng followingIds của thằng userSentId
+      updatedUser = await UserModel.pushFollowingIds(data.userSentId, data.userReceivedId)
+      // 2. Updated cái thằng followedIds của thằng userReceivedId
+      await UserModel.pushFollowerIds(data.userReceivedId, data.userSentId)
+      // 3. Updated cái thằng notifIds của thằng userReceivedId (nghĩa là thằng nhận có một thông báo mới)
+      updatedUserFollowing = await UserModel.pushNotifIds(data.userReceivedId, data.notifId)
+    } else if (data.currentUserId && data.userUnFollowId) {
+      // đối với thằng user hủy follow thì xóa cái trường following
+      await UserModel.deteleFollowingId(data.currentUserId, data.userUnFollowId)
+      // đối với thằng user bị hủy thì xóa trường follower
+      await UserModel.deteleFollowerId(data.userUnFollowId, data.currentUserId)
     }
     // else if (data.currentPassword && data.newPassword) {
     //   // change password
@@ -271,7 +300,10 @@ const update = async (data) => {
       updatedUser = await UserModel.update(data.currentUserId, data)
     }
 
-    return pickUser(updatedUser)
+    return {
+      updatedUser: pickUser(updatedUser),
+      updateUserFollowing: pickUser(updatedUserFollowing)
+    }
 
   } catch (error) {
     throw new Error(error)
@@ -327,6 +359,55 @@ const getMap = async (data) => {
   }
 }
 
+const getListUrlAvatar = async (data) => {
+  console.log('🚀 ~ file: user.service.js:342 ~ getListUrlAvatar ~ data:', data)
+  try {
+    let listUserFollow = [], listUrlAvatar = []
+    // listUserFollow.push(data.userReceivedId)
+    // Lấy tất cả các follower của thằng nhận ra nhưng chỉ giới hạn 4 thằng mới nhất cộng với thằng mới follow nauwx là 5
+    // Mình sẽ lấy url 5 thằng đó lưu vô mảng
+    const followerIdsRecord = await UserModel.findOneById(data.userReceivedId)
+    console.log('🚀 ~ file: user.service.js:351 ~ getListUrlAvatar ~ followerIdsRecord:', followerIdsRecord)
+    const moreUrlAvatar = followerIdsRecord.followerIds.length <= 4 ? 0 : followerIdsRecord.followerIds.length - 4
+    const followerIds = followerIdsRecord.followerIds.length <= 4 ? followerIdsRecord.followerIds : followerIdsRecord.followerIds.slice(-4).reverse()
+    listUserFollow = [
+      data.userSentId,
+      ...followerIds
+    ]
+    console.log('🚀 ~ file: user.service.js:354 ~ getListUrlAvatar ~ listUserFollow:', listUserFollow)
+    // Vậy là có tất cả các follower r bây giờ tạo promises all
+
+    await axios.all(
+      listUserFollow.map(id => UserModel.findOneById(id))
+    ).then(
+      async (datasReturn) => {
+        datasReturn.map(dataReturn => {
+          listUrlAvatar.push(dataReturn.avatar)
+        })
+      }
+    ).catch(err => console.log(err))
+
+    return {
+      listUrlAvatar: listUrlAvatar,
+      moreUrlAvatar: moreUrlAvatar
+    }
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getInfoUser = async (data) => {
+  console.log('🚀 ~ file: user.service.js:342 ~ getListUrlAvatar ~ data:', data)
+  try {
+    const userReturn = await UserModel.findOneById(data.userId)
+    if (!userReturn)
+      throw new Error('User not found!')
+    return pickUser(userReturn)
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const UserService = {
   createNew,
   signIn,
@@ -336,5 +417,7 @@ export const UserService = {
   verifyOtp,
   resetPassword,
   getMap,
-  updateMap
+  updateMap,
+  getListUrlAvatar,
+  getInfoUser
 }
