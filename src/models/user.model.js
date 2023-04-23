@@ -217,7 +217,7 @@ const deteleFollowingId = async (userId, followingId) => {
   try {
     const result = await getDB().collection(userCollectionName).updateOne(
       { _id: ObjectId(userId) }, // Điều kiện truy vấn để tìm bản ghi cần cập nhật
-      { $pull: { followingIds: followingId } } // Phương thức $pull để xóa phần tử có giá trị là abc khỏi mảng follower
+      { $pull: { followingIds: ObjectId(followingId) } } // Phương thức $pull để xóa phần tử có giá trị là abc khỏi mảng follower
     )
     console.log('🚀 ~ file: user.model.js:222 ~ deteleFollowingId ~ result:', result)
     return result
@@ -230,7 +230,7 @@ const deteleFollowerId = async (userId, followerId) => {
   try {
     const result = await getDB().collection(userCollectionName).updateOne(
       { _id: ObjectId(userId) }, // Điều kiện truy vấn để tìm bản ghi cần cập nhật
-      { $pull: { followerIds: followerId } } // Phương thức $pull để xóa phần tử có giá trị là abc khỏi mảng follower
+      { $pull: { followerIds: ObjectId(followerId) } } // Phương thức $pull để xóa phần tử có giá trị là abc khỏi mảng follower
     )
     console.log('🚀 ~ file: user.model.js:235 ~ deteleFollowerId ~ result:', result)
     return result
