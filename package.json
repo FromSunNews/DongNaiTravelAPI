@@ -1,12 +1,12 @@
 {
   "name": "dongnaitravelapi",
   "version": "1.0.0",
-  "description": "API for DongNaiTravelApp using Node.js, Express.js, MongoDB",
+  "description": "API for DongNaiTravelApp using Node.js, Express.js, MongoDB",https://github.com/FromSunNews/DongNaiTravelAPI/blob/master/package.json
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "eslint": "eslint src",
-    "clean": "del build && mkdir build",
+    "clean": "rm -rf build && mkdir build",
     "build-babel": "babel ./src -d ./build/src",
     "build": "npm run clean && npm run build-babel",
     "production": "npm run build && cross-env BUILD_MODE=production node ./build/src/server.js",
