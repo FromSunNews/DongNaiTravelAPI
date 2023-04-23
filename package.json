@@ -2,19 +2,19 @@
   "name": "dongnaitravelapi",
   "version": "1.0.0",
   "description": "API for DongNaiTravelApp using Node.js, Express.js, MongoDB",
-  "main": "src/server.js",
+  "main": "src/index.js",
   "engines": {
-    "node": "14.x"
+    "node": "18.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "eslint": "eslint src",
-    "clean": "rm -rf build && mkdir build",
+    "clean": "del build && mkdir build",
     "build-babel": "babel ./src -d ./build/src",
     "build": "npm run clean && npm run build-babel",
-    "production": "npm run build && cross-env BUILD_MODE=production node ./build/src/server.js",
-    "dev": "cross-env BUILD_MODE=dev nodemon --exec ./node_modules/.bin/babel-node ./src/server.js",
-    "start": "node ./build/src/server.js"
+    "production": "npm run build && cross-env BUILD_MODE=production node ./build/src/index.js",
+    "dev": "cross-env BUILD_MODE=dev nodemon --exec ./node_modules/.bin/babel-node ./src/index.js",
+    "start": "node ./build/src/index.js"
   },
   "repository": {
     "type": "git",
