@@ -1,7 +1,7 @@
 {
   "name": "dongnaitravelapi",
   "version": "1.0.0",
-  "description": "API for DongNaiTravelApp using Node.js, Express.js, MongoDB",https://github.com/FromSunNews/DongNaiTravelAPI/blob/master/package.json
+  "description": "API for DongNaiTravelApp using Node.js, Express.js, MongoDB",
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
