@@ -6,11 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "eslint": "eslint src",
-    "clean": "rm -rf build && mkdir build",
+    "clean": "rimraf build",
     "build-babel": "babel ./src -d ./build/src",
     "build": "npm run clean && npm run build-babel",
     "production": "npm run build && cross-env BUILD_MODE=production node ./build/src/server.js",
     "dev": "cross-env BUILD_MODE=dev nodemon --exec ./node_modules/.bin/babel-node ./src/server.js",
+    "prestart": "npm run build",
     "start": "node ./build/src/server.js"
   },
   "repository": {
@@ -50,6 +51,7 @@
     "multer": "^1.4.5-lts.1",
     "openai": "^3.2.1",
     "otp-generator": "^4.0.1",
+    "rimraf": "^5.0.0",
     "sib-api-v3-sdk": "^8.4.2",
     "socket.io": "^4.5.4",
     "streamifier": "^0.1.1",
