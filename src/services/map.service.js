@@ -373,16 +373,28 @@ const getPlacesTextSearch = async (data) => {
 const getPlaceDetails = async (data) => {
   // data có dạng:
   // data = {
-  //   placeId: 'XXXXXXXXXX'
+  //   placeId: 'XXXXXXXXXX',
+  //   hàm này để kiểm tra xem trên FE có đang bấm vào Poiclick trên nền tảng android hay không
+  //   androidPoiClick: true
   // }
   console.log('🚀 ~ file: map.service.js:256 ~ getPlaceDetails ~ data:', data)
   try {
-    let placeTranform
-    let placeTranformReturn
+    let placeTranform, placeTranformReturn, existPlace
     // Kiểm tra trong database xem có place_id này chưa
-    const existPlace = await MapModel.findOneByPlaceId(data.placeId)
+    if (data?.androidPoiClick) {
+      const placeIdClone = cloneDeep(data.placeId)
+      // Tách 4 ký tự đầu tiên
+      const firstString = placeIdClone.slice(0, 4)
+
+      // Tách 12 ký tự cuối cùng
+      const lastString = placeIdClone.slice(-12)
+
+      existPlace = await MapModel.findOneByPlaceIdStartEnd(firstString, lastString)
+    } else {
+      existPlace = await MapModel.findOneByPlaceId(data.placeId)
+    }
     console.log('🚀 ~ file: map.service.js:294 ~ getPlaceDetails ~ existPlace:', existPlace)
-    if (!existPlace) {
+    if (!existPlace || existPlace.length === 0) {
       // Lấy dữ về place details trên google map
       const result = await PlacesSearchProvider.getPlaceDetailsAPI({
         place_id: data.placeId
@@ -465,9 +477,13 @@ const getPlaceDetails = async (data) => {
       }
       // Phuong: oke lưu vào db thôi. Không cần đợi
       MapModel.createNew(placeTranform)
-    } else {
+    } else if (existPlace || existPlace.length !== 0) {
       console.log('Nơi này đã tồn tại!')
-      placeTranformReturn = existPlace
+      if (data?.androidPoiClick) {
+        placeTranformReturn = existPlace[0]
+      } else {
+        placeTranformReturn = existPlace
+      }
       // bây giờ trong placeTranformReturn thiếu photos với reviews nên lấy hai thằng đó về thông qua place_id
       const photosReturn = await PhotosModel.findOneByPlaceId(placeTranformReturn.place_id)
       // console.log('🚀 ~ file: map.service.js:396 ~ getPlaceDetails ~ photosReturn:', photosReturn)
