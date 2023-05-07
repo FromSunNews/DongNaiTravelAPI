@@ -39,6 +39,21 @@ export const FilterConstants = {
   }
 }
 
+export const PlaceFindStageByQuality = {
+  'all': {},
+  'recommended': { 'isRecommended': true },
+  'popular': { 'numberOfVisited': -1, 'user_ratings_total': -1 },
+  'most_visit': { 'numberOfVisited': -1 },
+  'high_rating': { 'rating': -1 }
+}
+
+export const PlaceFilterKeywords = {
+  quality: 'quality',
+  type: 'type'
+}
+
+export const QueryValueSeperator = ';'
+
 export const TextToSpeechConstants = {
   VN_FEMALE_1: {
     languageCode: 'vi',

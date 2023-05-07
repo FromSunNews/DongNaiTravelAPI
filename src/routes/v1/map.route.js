@@ -5,13 +5,16 @@ import { MapValidation } from 'validations/map.validation'
 const router = express.Router()
 
 router.route('/places')
-  .post(MapController.getPlaces)
+  .get(MapController.getPlaces)
 
 router.route('/places_text_search')
   .post(MapValidation.getPlacesTextSearch, MapController.getPlacesTextSearch)
 
 router.route('/place_details')
   .post(MapController.getPlaceDetails)
+
+router.route('/place_details')
+  .get(MapController.getPlaceDetailsWithPipeline)
 
 router.route('/private_keys')
   .get(MapController.privateKeys)

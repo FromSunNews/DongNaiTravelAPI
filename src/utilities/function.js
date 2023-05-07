@@ -1,6 +1,8 @@
 import haversineDistance from 'haversine-distance'
 import { cloneDeep } from 'lodash'
 
+import { QueryValueSeperator } from './constants'
+
 export const haverSineDistanceFormula = (coor1, coor2) => {
   return haversineDistance(coor1, coor2)
 }
@@ -76,8 +78,8 @@ export const sortByRatingHighToLow = (arrPlaceTextSearch) => {
  * console.log(getExpectedFieldsOption(fields));
  * ...
  */
-export const getExpectedFieldsProjection = (fields, seperator = ';') => {
+export const getExpectedFieldsProjection = (fields) => {
   if (!fields) return {}
-  let fieldsArr = fields.split(seperator).map(field => [field, true])
+  let fieldsArr = fields.split(QueryValueSeperator).map(field => [field, true])
   return Object.fromEntries(fieldsArr)
 }

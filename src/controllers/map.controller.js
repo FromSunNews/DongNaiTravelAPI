@@ -10,7 +10,19 @@ import { env } from 'config/environtment'
  */
 const getPlaces = async (req, res) => {
   try {
-    let result = await MapService.getPlaces(req.query)
+    let result = await MapService.getPlacesWithPipeline(req.query)
+    return res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    return res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+const getPlaceDetailsWithPipeline = async (req, res) => {
+  try {
+    // console.log('MAP CONTROLLER, getPlaceDetailsWithPipeline: ', req.query)
+    let result = await MapService.getPlaceDetailWithPipeline(req.query)
     return res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     return res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -115,6 +127,7 @@ const getGeocodingReverse = async (req, res) => {
 
 export const MapController = {
   getPlaces,
+  getPlaceDetailsWithPipeline,
   getPlacesTextSearch,
   privateKeys,
   getPlaceDetails,
