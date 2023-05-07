@@ -22,6 +22,7 @@ import { OpenWeatherProvider } from 'providers/OpenWeatherProvider'
  * @property {number} limit
  * @property {number} skip
  * @property {string} fields
+ * @property {string} filter
  */
 
 /**
@@ -45,6 +46,48 @@ const getPlaces = async (data) => {
     console.log(data)
     let places = await MapModel.findManyInLimit({}, getExpectedFieldsProjection(fields), parseInt(limit), parseInt(skip))
     return places
+  } catch (error) {
+    return undefined
+  }
+}
+
+/**
+ * Service này dùng để lấy ra tất cả các places, tuy nhiên là nên dùng nó để lấy một số lượng
+ * có hạn nào đó thôi. Service này dùng phương thức `findManyInLimitWithPipelines`.
+ * @param {GetPlacesServiceProps} data Là một object lấy từ `req.query`.
+ * @returns {Promise<WithId<Document>[] | undefined>}
+ */
+const getPlacesWithPipeline = async (data) => {
+  try {
+    let { limit, skip, fields, filter } = data
+    let places = await MapModel.findManyInLimitWithPipeline(
+      filter,
+      fields,
+      parseInt(limit),
+      parseInt(skip)
+    )
+    // let photoPromises = places.map(place => PhotosModel.findOneByPlaceId(place.place_id))
+    // let photos = await Promise.all(photoPromises)
+
+    // Thêm photo vào cho place
+    // for(let place of places) {
+    //   let photo = photos.find(photo => photo.place_photos_id);
+    // }
+
+    return places
+  } catch (error) {
+    return undefined
+  }
+}
+
+const getPlaceDetailWithPipeline = async (query) => {
+  try {
+    let data = {
+      placeId: query.placeId,
+      fields: query.fields
+    }
+    const place = await MapModel.findOneWithPipeline(data)
+    return place
   } catch (error) {
     return undefined
   }
@@ -562,6 +605,8 @@ const getGeocodingReverse = async (data) => {
 
 export const MapService = {
   getPlaces,
+  getPlacesWithPipeline,
+  getPlaceDetailWithPipeline,
   getPlacesTextSearch,
   getPlaceDetails,
   getWeatherCurrent,
