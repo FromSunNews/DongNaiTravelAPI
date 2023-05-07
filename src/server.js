@@ -7,6 +7,7 @@ import socketIo from 'socket.io'
 import http from 'http'
 import { trackingUserLocationCurrent } from 'sockets/directionSocket'
 import { createTravelItinerary } from 'sockets/itinerarySocket'
+import { getNotifToUser } from 'sockets/notifSocket'
 
 connectDB()
   .then(() => console.log('Connected successfully to database server!'))
@@ -31,7 +32,9 @@ const bootServer = () => {
   app.use(cors())
 
   // Enable req.body data
-  app.use(express.json())
+  // Xử lý lỗi PayloadTooLargeError: request entity too large
+  app.use(express.json({ limit: '50mb' }))
+  app.use(express.urlencoded({ limit: '50mb' }))
 
   // Phuong: cấu hình cho api chia ra cho ngọn
   app.use('/v1', apiV1)
@@ -58,6 +61,9 @@ const bootServer = () => {
 
     // Hàm xử lý tạo lịch trình cho user
     createTravelItinerary(io, socket, socketIdMap)
+
+    // Hàm xử lý nhận thông báo cho user
+    getNotifToUser(io, socket, socketIdMap)
 
     socket.on('disconnect', () => {
       console.log('🚀 ~ file: server.js:59 ~ socket.on ~ socketIdMap:', socketIdMap)

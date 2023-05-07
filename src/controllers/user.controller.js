@@ -109,9 +109,9 @@ const resetPassword = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const userId = req.jwtDecoded._id
-    const userAvatarFile = req.file
-    const result = await UserService.update(userId, req.body, userAvatarFile)
+    // const userId = req.jwtDecoded._id
+
+    const result = await UserService.update(req.body)
 
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
@@ -146,6 +146,17 @@ const updateMap = async (req, res) => {
   }
 }
 
+const getInfoUser = async (req, res) => {
+  try {
+    const result = await UserService.getInfoUser(req.body)
+
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
 export const UserController = {
   createNew,
@@ -158,5 +169,6 @@ export const UserController = {
   resetPassword,
   privateKeys,
   getMap,
-  updateMap
+  updateMap,
+  getInfoUser
 }

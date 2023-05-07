@@ -27,8 +27,11 @@ router.route('/send_otp')
 router.route('/verify_otp')
   .post(UserController.verifyOtp)
 
+// router.route('/update')
+//   .put(AuthMiddleware.isAuthorized, UploadMiddleware.upload.single('avatar'), UserValidation.update, UserController.update)
+
 router.route('/update')
-  .put(AuthMiddleware.isAuthorized, UploadMiddleware.upload.single('avatar'), UserValidation.update, UserController.update)
+  .post(UserValidation.update, UserController.update)
 
 router.route('/reset_password')
   .put(UserValidation.resetPassword, UserController.resetPassword)
@@ -41,5 +44,8 @@ router.route('/get_map_user')
 
 router.route('/update_map_user')
   .post(UserController.updateMap)
+
+router.route('/get_info_user')
+  .post(UserController.getInfoUser)
 
 export const userRoutes = router
