@@ -15,6 +15,7 @@ import { cloneDeep } from 'lodash'
 
 const createNew = async (data) => {
   try {
+    console.log('User data: ', data)
     delete data['confirmPassword']
     // check email have already in system yet ?
     const existUser = await UserModel.findOneByEmail(data.email)
@@ -29,7 +30,9 @@ const createNew = async (data) => {
       email: data.email,
       password: bcryptjs.hashSync(data.password, 8),
       username: data.username ? data.username : nameFromEmail,
-      displayName: data.fullName ? data.fullName : nameFromEmail
+      displayName: data.fullName ? data.fullName : nameFromEmail,
+      firstName: data.firstName,
+      lastName: data.lastName
     }
 
     const createdUser = await UserModel.createNew(userData)
@@ -152,7 +155,7 @@ const sendOtp = async (data) => {
     await SendInBlueProvider.sendEmail(data.email, subject, htmlContent)
 
     // Phuong: otpToken luu vao DB
-    const updatedUser = await UserModel.update(existUser._id, {
+    const updatedUser = await UserModel.updateOneAndGet(existUser._id, {
       otpToken: otpToken
     })
 
@@ -239,6 +242,22 @@ const resetPassword = async (data) => {
   }
 }
 
+const updateByCase = async(id, data) => {
+  try {
+    let userId = id
+    let updateCase = data.updateCase
+    let updateData = data.updateData
+
+    let result = await UserModel.updateOneAndGetByCase(userId, updateData, updateCase)
+
+    if (!result) throw new Error('Cannot update user')
+
+    return result
+  } catch (error) {
+    return undefined
+  }
+}
+
 const update = async (data) => {
   console.log('🚀 ~ file: user.service.js:226 ~ update ~ data:', data)
   try {
@@ -252,7 +271,7 @@ const update = async (data) => {
       // console.log(uploadResult)
       console.log('🚀 ~ file: user.service.js:240 ~ update ~ uploadResult.url:', uploadResult.url)
 
-      updatedUser = await UserModel.update(data.currentUserId, {
+      updatedUser = await UserModel.updateOneAndGet(data.currentUserId, {
         coverPhoto: uploadResult.url
       })
     } else if (data.avatar) {
@@ -263,7 +282,7 @@ const update = async (data) => {
       // console.log(uploadResult)
       console.log('🚀 ~ file: user.service.js:240 ~ update ~ uploadResult.url:', uploadResult.url)
 
-      updatedUser = await UserModel.update(data.currentUserId, {
+      updatedUser = await UserModel.updateOneAndGet(data.currentUserId, {
         avatar: uploadResult.url
       })
     } else if (data.userReceivedId && data.userSentId && data.notifId) {
@@ -290,14 +309,14 @@ const update = async (data) => {
     //     throw new Error('Your current password is incorrect!')
     //   }
 
-    //   updatedUser = await UserModel.update(userId, {
+    //   updatedUser = await UserModel.updateOneAndGet(userId, {
     //     password: bcryptjs.hashSync(data.newPassword, 8)
     //   })
 
     // }
     else {
       // general info user
-      updatedUser = await UserModel.update(data.currentUserId, data)
+      updatedUser = await UserModel.updateOneAndGet(data.currentUserId, data)
     }
 
     return {
@@ -325,7 +344,7 @@ const updateMap = async (data) => {
     delete data.currentUserId
 
     console.log('🚀 ~ file: user.service.js:328 ~ updateMap ~ data:', data)
-    const updatedUser = await UserModel.update(existUser._id.toString(), data)
+    const updatedUser = await UserModel.updateOneAndGet(existUser._id.toString(), data)
     console.log('🚀 ~ file: user.service.js:323 ~ updateMap ~ updatedUser:', updatedUser)
 
     return updatedUser
@@ -412,6 +431,7 @@ export const UserService = {
   createNew,
   signIn,
   refreshToken,
+  updateByCase,
   update,
   sendOtp,
   verifyOtp,

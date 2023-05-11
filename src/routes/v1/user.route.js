@@ -9,7 +9,6 @@ import { UploadMiddleware } from 'middlewares/upload.middleware'
 const router = express.Router()
 
 router.route('/sign_up')
-
   .post(UserValidation.createNew, UserController.createNew)
 
 router.route('/sign_in')
@@ -32,6 +31,9 @@ router.route('/verify_otp')
 
 router.route('/update')
   .post(UserValidation.update, UserController.update)
+
+router.route('/update_by_case')
+  .post(AuthMiddleware.isAuthorized, UserController.updateByCase)
 
 router.route('/reset_password')
   .put(UserValidation.resetPassword, UserController.resetPassword)

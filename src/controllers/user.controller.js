@@ -5,6 +5,7 @@ import { env } from 'config/environtment'
 const createNew = async (req, res) => {
   try {
     const result = await UserService.createNew(req.body)
+    console.log('New user: ', result)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -106,6 +107,18 @@ const resetPassword = async (req, res) => {
   }
 }
 
+const updateByCase = async(req, res) => {
+  try {
+    let userId = req.jwtDecoded._id
+    const result = await UserService.updateByCase(userId, req.body)
+
+    return res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    return res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
 
 const update = async (req, res) => {
   try {
@@ -170,5 +183,6 @@ export const UserController = {
   privateKeys,
   getMap,
   updateMap,
-  getInfoUser
+  getInfoUser,
+  updateByCase
 }

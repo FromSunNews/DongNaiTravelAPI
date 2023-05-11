@@ -16,6 +16,7 @@ import { CloudinaryProvider } from 'providers/CloudinaryProvider'
 import { PhotosModel } from 'models/photos.model'
 import { ReviewsModel } from 'models/reviews.model'
 import { OpenWeatherProvider } from 'providers/OpenWeatherProvider'
+import { UserModel } from 'models/user.model'
 
 /**
  * @typedef GetPlacesServiceProps
@@ -57,15 +58,19 @@ const getPlaces = async (data) => {
  * @param {GetPlacesServiceProps} data Là một object lấy từ `req.query`.
  * @returns {Promise<WithId<Document>[] | undefined>}
  */
-const getPlacesWithPipeline = async (data) => {
+const getPlacesWithPipeline = async (query) => {
   try {
-    let { limit, skip, fields, filter } = data
-    let places = await MapModel.findManyInLimitWithPipeline(
+    let { limit, skip, fields, filter } = query
+    let user
+    if (query.userId) user = await UserModel.findOneById(query.userId)
+    let data = {
       filter,
       fields,
-      parseInt(limit),
-      parseInt(skip)
-    )
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      user
+    }
+    let places = await MapModel.findManyInLimitWithPipeline(data)
     // let photoPromises = places.map(place => PhotosModel.findOneByPlaceId(place.place_id))
     // let photos = await Promise.all(photoPromises)
 
@@ -84,9 +89,12 @@ const getPlaceDetailWithPipeline = async (query) => {
   try {
     let data = {
       placeId: query.placeId,
-      fields: query.fields
+      fields: query.fields,
+      lang: query.lang ? query.lang : 'en'
     }
-    const place = await MapModel.findOneWithPipeline(data)
+    let user
+    if (query.userId) user = await UserModel.findOneById(query.userId)
+    const place = await MapModel.findOneWithPipeline(data, user)
     return place
   } catch (error) {
     return undefined
