@@ -112,3 +112,16 @@ export const PlaceFindStages = {
     }
   }
 }
+
+/**
+ * Các trường hợp update của user sẽ chia ra làm nhiều phần.
+ * - Update mặc định: là kiểu update sẽ dùng toán tử $set và sẽ có cập nhật updatedAt.
+ * - Update các trường array, vì đa phần các trường array này có toán tử update riêng, và không cần phải cập nhật updatedAt
+ */
+export const UserUpdateCases = {
+  'default': (newUserData) => ({ $set: { newUserData }, $currentDate: { updatedAt: true } }),
+  'addEle:savedPlaces': (placeId) => ({ $push: { 'savedPlaces': placeId } }),
+  'removeEle:savedPlaces': (placeId) => ({ $pull: { 'savedPlaces': placeId } }),
+  'addEle:follower': (userId) => ({ $push: { 'followerIds': userId } }),
+  'removeEle:follower': (userId) => ({ $pull: { 'followerIds': userId } })
+}

@@ -3,37 +3,14 @@ import { ObjectId } from 'mongodb'
 import { getDB } from 'config/mongodb'
 import { NotifModel } from './notif.model'
 
+import {
+  UserUpdateCases
+} from 'utilities/mongo'
+
+import { userCollectionSchema } from 'schemas/user.schema'
+
 // Define User collection
 const userCollectionName = 'users'
-const userCollectionSchema = Joi.object({
-  email: Joi.string().required(), // unique
-  password: Joi.string().required(),
-  username: Joi.string().required().min(2).max(30).trim(), // username sẽ không unique bởi vì sẽ có những đuôi email từ các nhà cũng cấp khác nhau
-
-  displayName: Joi.string().required().min(2).max(30).trim(),
-  avatar: Joi.string().default(null),
-  coverPhoto: Joi.string().default(null),
-
-  role: Joi.string().default('client'),
-  location: {
-    longitude: Joi.string().default(null),
-    latitude: Joi.string().default(null)
-  },
-  savedSuggestions: Joi.array().items(Joi.string()).default([]),
-  savedPlaces: Joi.array().items(Joi.string()).default([]),
-  followerIds: Joi.array().items(Joi.string()).default([]),
-  followingIds: Joi.array().items(Joi.string()).default([]),
-  notifIds: Joi.array().items(Joi.string()).default([]),
-  // lovedBlogIds: Joi.array().items(Joi.string()).default([]),
-  // savedBlogIds: Joi.array().items(Joi.string()).default([]),
-
-  receivePoints: Joi.number().integer().default(0),
-  lostPoints: Joi.number().integer().default(0),
-  otpToken: Joi.string().default(null),
-  birthday: Joi.date().timestamp().default(null),
-  createdAt: Joi.date().timestamp('javascript').default(Date.now),
-  updatedAt: Joi.date().timestamp().default(null)
-})
 
 // Phuong: Đây là những trường không được update (giá trị cố định không đổi)
 const INVALID_UPDATE_FILEDS = ['_id', 'email', 'username', 'role', 'createdAt']
@@ -87,8 +64,34 @@ const createNew = async (data) => {
   }
 }
 
+// Tuan: Cập nhật user bằng các trường hợp
+const updateOneAndGetByCase = async(id, data, updateCase = 'default') => {
+  try {
+    const updateData = typeof data === 'string' | 'number' ? data : Array.isArray(data) ? [...data] : { ...data }
+
+    Object.keys(updateData).forEach(fieldName => {
+      if (INVALID_UPDATE_FILEDS.includes(fieldName)) {
+        delete updateData[fieldName]
+      }
+    })
+
+    let updateExpression = UserUpdateCases[updateCase](updateData)
+
+    const result = await getDB().collection(userCollectionName).findOneAndUpdate(
+      // Phuong: Phải chuyển _id ở client thành ObjectId
+      { _id: new ObjectId(id) },
+      updateExpression,
+      { returnDocument: 'after' }
+    )
+
+    return result.value
+  } catch (error) {
+    return undefined
+  }
+}
+
 // Phuong: Cập nhật user thông qua _id
-const update = async (id, data) => {
+const updateOneAndGet = async (id, data) => {
   try {
     const updateData = { ...data }
     // Phuong: CHỗ này là xóa những trường mà mình không cho phép update
@@ -242,7 +245,8 @@ const deteleFollowerId = async (userId, followerId) => {
 export const UserModel = {
   userCollectionName,
   createNew,
-  update,
+  updateOneAndGetByCase,
+  updateOneAndGet,
   findOneById,
   findOneByEmail,
   findOneByUserName,

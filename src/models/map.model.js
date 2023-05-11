@@ -14,83 +14,11 @@ import {
   PlaceFindStages
 } from 'utilities/mongo'
 
+import { mapCollectionSchema } from 'schemas/place.schema'
 
 // Define Map collection
 const mapCollectionName = 'maps'
-const mapCollectionSchema = Joi.object({
-  place_id: Joi.string().required(),
-  // get _id in photos collection
-  photos_id: Joi.string().default(null),
-  // get _id in reviews collection
-  reviews_id: Joi.string().default(null),
-  // get _id in reviews collection
-  content_id: Joi.string().default(null),
 
-  isRecommended: Joi.boolean().default(false),
-  numberOfVisited: Joi.number().default(0),
-
-  reference: Joi.string().default(null),
-
-  plus_code: Joi.object().default(null),
-
-  business_status : Joi.string().default(null),
-
-  current_opening_hours: Joi.object().default(null),
-  opening_hours: Joi.object().default(null),
-  // address name
-  formatted_address : Joi.string().default(null),
-  name : Joi.string().default(null),
-  address_components: Joi.array().default(null),
-  adr_address: Joi.string().default(null),
-
-  // number phone
-  formatted_phone_number : Joi.string().default(null),
-  international_phone_number: Joi.string().default(null),
-
-  geometry : Joi.object().default(null),
-
-
-  // icons
-  icon : Joi.string().default(null),
-  icon_background_color : Joi.string().default(null),
-  icon_mask_base_uri : Joi.string().default(null),
-
-  // photos:
-  // photos: Joi.array().default(null),
-
-  rating: Joi.number().default(null),
-  user_ratings_total: Joi.number().default(null),
-
-  // reviews: Joi.array().default(null),
-  editorial_summary: Joi.object().default(null),
-
-  types: Joi.array().default(null),
-
-  url: Joi.string().default(null),
-  utc_offset: Joi.number().default(null),
-  vicinity: Joi.string().default(null),
-  website: Joi.string().default(null),
-  wheelchair_accessible_entrance: Joi.boolean().default(null),
-  permanently_closed : Joi.boolean().default(null),
-  curbside_pickup: Joi.boolean().default(null),
-  delivery: Joi.boolean().default(null),
-  dine_in: Joi.boolean().default(null),
-  price_level: Joi.number().default(null),
-  reservable: Joi.boolean().default(null),
-  scope: Joi.string().default(null),
-  secondary_opening_hours: Joi.array().default(null),
-  serves_beer: Joi.boolean().default(null),
-  serves_breakfast: Joi.boolean().default(null),
-  serves_brunch: Joi.boolean().default(null),
-  serves_dinner: Joi.boolean().default(null),
-  serves_lunch: Joi.boolean().default(null),
-  serves_vegetarian_food: Joi.boolean().default(null),
-  serves_wine: Joi.boolean().default(null),
-  takeout: Joi.boolean().default(null),
-
-  createdAt: Joi.date().timestamp('javascript').default(Date.now),
-  updatedAt: Joi.date().timestamp().default(null)
-})
 
 // Phuong: Đây là những trường không được update (giá trị cố định không đổi)
 const INVALID_UPDATE_FILEDS = ['_id', 'place_id', 'createdAt']
@@ -167,10 +95,18 @@ const findManyInLimit = async (filter, fields, limit = 10, skip = 0) => {
  * @returns
  */
 const findManyInLimitWithPipeline = (function() {
-  return async (filter, fields, limit = 10, skip = 0) => {
+  return async (data) => {
+    let { filter, fields, limit = 10, skip = 0, user } = data
     try {
       // Đầu tiên thì split cái filter ra bằng khoảng trắng;
       let filters = filter.split(' ')
+      let projectStage = {
+        '$project': {
+          'place_photos': {
+            'photos': true
+          }
+        }
+      }
       // T gọi cái này là find stage là bời vì nó sẽ tìm record theo $match
       let findStage = {
         match: {
@@ -196,6 +132,13 @@ const findManyInLimitWithPipeline = (function() {
 
       // console.log('FIND STAGE: ', findStage)
 
+      projectStage.$project = { ...getExpectedFieldsProjection(fields), ...projectStage.$project }
+      if (user) {
+        projectStage.$project['isLiked'] = {
+          $in: ['$place_id', user.savedPlaces]
+        }
+      }
+
       const pipeline = [
         findStage.match,
         ...findStage.others,
@@ -207,14 +150,7 @@ const findManyInLimitWithPipeline = (function() {
             'as': 'place_photos'
           }
         },
-        {
-          '$project': {
-            ...getExpectedFieldsProjection(fields),
-            'place_photos': {
-              'photos': true
-            }
-          }
-        },
+        projectStage,
         { '$skip': skip },
         { '$limit': limit }
       ]
@@ -278,19 +214,29 @@ const findOneWithPipeline = (function() {
             },
             {
               $project: {
-                plainTextMarkFormat: true
+                plainTextMarkFormat: true,
+                plainTextBase64: true,
+                speech: true
               }
             }
           ]
         }
       }
+    },
+    isLiked: {
+      field: 'isLiked'
     }
   }
 
-  return async (data) => {
+  return async (data, user) => {
     try {
-      // url chỉ nhận 2 query là placeId và fields
-      let { placeId, fields } = data
+      // url chỉ nhận 2 query là placeId và fields (có thể update thêm)
+      // userId có thể undefined bởi vì không phải lúc nào cũng có thể
+      let {
+        placeId,
+        fields,
+        lang
+      } = data
       // Khai báo pipeline. Stage đầu tiên là mình kiếm ra các document này trước.
       // Nếu như tìm được 1 document thì nó sẽ chỉ trả về một document trong một mảng.
       // Và vì mỗi place chỉ có một placeId cho nên là chỉ luôn tìm được một id.
@@ -306,9 +252,25 @@ const findOneWithPipeline = (function() {
       let addFieldsStage = []
       // Check xem trong fields có chứa các place đặc biệt hay không? Nếu có thì true, ngược lại là fail.
       let isContainOnlySpecialtyFields = fields.split(';').every(key => Boolean(specialtyFields[key]))
+      if (lang) {
+        specialtyFields.content.lookupStage.options.pipeline[1].$project.speech = { [lang]: true }
+        specialtyFields.content.lookupStage.options.pipeline[1].$project.plainTextBase64 = { [lang]: true }
+        specialtyFields.content.lookupStage.options.pipeline[1].$project.plainTextMarkFormat = { [lang]: true }
+      }
 
       for (let key in specialtyFields) {
-        if (fields && fields.includes(key)) {
+        /*
+          Ở đây mình check thêm việc là có phải một người dùng trong app yêu cầu hay không?
+          Nếu có thì mình check luôn là place này có được người dùng yêu thích hay không?
+          Hay là đã được người dùng này ghé thăm hay chưa? isLiked và isVisited cũng là 2
+          fields đặc biệt, nhưng khác với 2 field kia là 2 fields này không dùng $lookup.
+        */
+        if (user && key === specialtyFields.isLiked.field) {
+          if (!fields.includes(specialtyFields.isLiked.field)) fields += `;${specialtyFields.isLiked.field}`
+          addFieldsStage[0]['$addFields']['isLiked'] = {
+            $in: ['$place_id', user.savedPlaces]
+          }
+        } else if (fields && fields.includes(key)) {
           /*
             Check xem nếu như trong fields có chứa content. Thì đầu tiên là thêm
             expression cho addFields stage. Tiếp theo là tạo lookup stage cho content.
@@ -331,15 +293,13 @@ const findOneWithPipeline = (function() {
             specialtyFields[key].lookupStage.options
           )
           pipeline.push(lookupStage)
-          if (isContainOnlySpecialtyFields) fields = fields.replace(new RegExp(`${specialtyFields[key].field};|${specialtyFields[key].field}`), '')
         }
+        if (isContainOnlySpecialtyFields) fields = fields.replace(new RegExp(`${specialtyFields[key].field};|${specialtyFields[key].field}`), '')
       }
-
-      console.log('MAP MODEL findOneWithPipeline (fields): ', fields)
       // Tạo project stage cho các fields của place. Nếu như fields chỉ chứa các fields đặc biệt hoặc
       // là không có fields nào thì nó sẽ trả về rỗng.
       placeDetailsProjectionStage = createProjectionStage(getExpectedFieldsProjection(fields))
-      pipeline.push(...placeDetailsProjectionStage, ...addFieldsStage)
+      pipeline.push(...addFieldsStage, ...placeDetailsProjectionStage)
       // console.log('MAP MODEL findOneWithPipeline (addFieldsStage): ', addFieldsStage[0]['$addFields']['content'])
       // console.log('MAP MODEL findOneWithPipeline (addFieldsStage): ', addFieldsStage[0]['$addFields']['reviews'])
       console.log('MAP MODEL findOneWithPipeline (pipeline): ', pipeline)
