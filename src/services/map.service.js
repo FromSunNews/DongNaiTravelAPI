@@ -89,7 +89,7 @@ const getPlaceDetailWithPipeline = async (query) => {
   try {
     let data = {
       placeId: query.placeId,
-      fields: query.fields,
+      fields: query.fields || '',
       lang: query.lang ? query.lang : 'en'
     }
     let user
