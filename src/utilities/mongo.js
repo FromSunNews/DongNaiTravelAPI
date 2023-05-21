@@ -120,8 +120,83 @@ export const PlaceFindStages = {
  */
 export const UserUpdateCases = {
   'default': (newUserData) => ({ $set: { newUserData }, $currentDate: { updatedAt: true } }),
-  'addEle:savedPlaces': (placeId) => ({ $push: { 'savedPlaces': placeId } }),
+  'addEle:savedPlaces': (placeId) => ({ $addToSet: { 'savedPlaces': placeId } }),
   'removeEle:savedPlaces': (placeId) => ({ $pull: { 'savedPlaces': placeId } }),
-  'addEle:follower': (userId) => ({ $push: { 'followerIds': userId } }),
-  'removeEle:follower': (userId) => ({ $pull: { 'followerIds': userId } })
+  'addEle:follower': (userId) => ({ $addToSet: { 'followerIds': userId } }),
+  'removeEle:follower': (userId) => ({ $pull: { 'followerIds': userId } }),
+  'addEle:visitedPlaces': (placeId) => ({ $addToSet: { 'visitedPlaces': placeId } }),
+  'removeEle:visitedPlaces': (placeId) => ({ $pull: { 'visitedPlaces': placeId } })
+}
+
+export const SpecialtyPlaceFieldStageNames = {
+  addFields: 'addFields',
+  lookup: 'lookup'
+}
+
+export const SpecialtyPlaceFields = {
+  place_photos: {
+    field: 'place_photos',
+    stages: {
+      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$place_photos.photos', 0] } },
+      [SpecialtyPlaceFieldStageNames.lookup]: {
+        $lookup: {
+          from: 'photos',
+          localField: 'place_id',
+          foreignField: 'place_photos_id',
+          as: 'place_photos'
+        }
+      }
+    }
+  },
+  reviews: {
+    field: 'reviews',
+    stages: {
+      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$reviews.reviews', 0] } },
+      [SpecialtyPlaceFieldStageNames.lookup]: {
+        $lookup: {
+          from: 'reviews',
+          localField: 'place_id',
+          foreignField: 'place_reviews_id',
+          as: 'reviews'
+        }
+      }
+    }
+  },
+  content: {
+    field: 'content',
+    stages: {
+      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$content', 0] } },
+      [SpecialtyPlaceFieldStageNames.lookup]: {
+        $lookup: {
+          from: 'content',
+          let: { pid: '$content_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ['$_id', { $toObjectId: '$$pid' }]
+                }
+              }
+            },
+            {
+              $project: {
+                plainTextMarkFormat: true,
+                plainTextBase64: true,
+                speech: true
+              }
+            }
+          ],
+          as: 'content'
+        }
+      }
+    }
+  },
+  isLiked: {
+    field: 'isLiked',
+    stages: {}
+  },
+  isVisited: {
+    field: 'isVisited',
+    stages: {}
+  }
 }

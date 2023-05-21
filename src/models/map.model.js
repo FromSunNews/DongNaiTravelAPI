@@ -11,7 +11,9 @@ import {
   createObjectIDByString,
   createProjectionStage,
   getExpectedFieldsProjection,
-  PlaceFindStages
+  PlaceFindStages,
+  SpecialtyPlaceFields,
+  SpecialtyPlaceFieldStageNames
 } from 'utilities/mongo'
 
 import { mapCollectionSchema } from 'schemas/place.schema'
@@ -100,12 +102,9 @@ const findManyInLimitWithPipeline = (function() {
     try {
       // Đầu tiên thì split cái filter ra bằng khoảng trắng;
       let filters = filter.split(' ')
+      let addFieldsStage = { $addFields: {} }
       let projectStage = {
-        '$project': {
-          'place_photos': {
-            'photos': true
-          }
-        }
+        '$project': {}
       }
       // T gọi cái này là find stage là bời vì nó sẽ tìm record theo $match
       let findStage = {
@@ -132,12 +131,20 @@ const findManyInLimitWithPipeline = (function() {
 
       // console.log('FIND STAGE: ', findStage)
 
-      projectStage.$project = { ...getExpectedFieldsProjection(fields), ...projectStage.$project }
+      addFieldsStage.$addFields = {
+        place_photos: { '$arrayElemAt': ['$place_photos.photos', 0] }
+      }
       if (user) {
-        projectStage.$project['isLiked'] = {
+        addFieldsStage.$addFields[SpecialtyPlaceFields.isLiked.field] = {
           $in: ['$place_id', user.savedPlaces]
         }
+        addFieldsStage.$addFields[SpecialtyPlaceFields.isVisited.field] = {
+          $in: ['$place_id', user.visitedPlaces]
+        }
       }
+
+      if (fields) fields += `;place_photos;${SpecialtyPlaceFields.isLiked.field};${SpecialtyPlaceFields.isVisited.field}`
+      projectStage.$project = { ...getExpectedFieldsProjection(fields) }
 
       const pipeline = [
         findStage.match,
@@ -149,12 +156,13 @@ const findManyInLimitWithPipeline = (function() {
             'foreignField': 'place_photos_id',
             'as': 'place_photos'
           }
-        },
-        projectStage,
-        { '$skip': skip },
-        { '$limit': limit }
+        }
       ]
-      // console.log('Pipeline: ', pipeline)
+
+      if (Object.keys(projectStage.$project).length >= 1) pipeline.push(projectStage)
+
+      pipeline.push(addFieldsStage, { '$skip': skip }, { '$limit': limit })
+      console.log('Pipeline: ', pipeline)
       const cursor = getDB().collection(mapCollectionName).aggregate(pipeline)
       const result = await cursor.toArray()
       return result
@@ -181,52 +189,52 @@ const findOneWithPipeline = (function() {
     Và như đã nói thì khi lookup các fields đặc biệt, mình phải thêm các stage khác hỗ trợ. Cho nên trong
     biến này mình sẽ khai báo thêm các data cho các stage đó.
   */
-  let specialtyFields = {
-    reviews: {
-      field: 'reviews',
-      addFieldsStage:  { '$arrayElemAt': ['$reviews.reviews', 0] },
-      lookupStage: {
-        from: 'reviews',
-        localField: 'place_id',
-        foreignField: 'place_reviews_id',
-        as: 'reviews'
-      }
-    },
-    content: {
-      field: 'content',
-      addFieldsStage:  { '$arrayElemAt': ['$content', 0] },
-      lookupStage: {
-        from: 'content',
-        localField: undefined,
-        foreignField: undefined,
-        as: 'content',
-        options: {
-          extras: {
-            let: { pid: '$content_id' }
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', { $toObjectId: '$$pid' }]
-                }
-              }
-            },
-            {
-              $project: {
-                plainTextMarkFormat: true,
-                plainTextBase64: true,
-                speech: true
-              }
-            }
-          ]
-        }
-      }
-    },
-    isLiked: {
-      field: 'isLiked'
-    }
-  }
+  // let specialtyFields = {
+  //   reviews: {
+  //     field: 'reviews',
+  //     addFieldsStage:  { '$arrayElemAt': ['$reviews.reviews', 0] },
+  //     lookupStage: {
+  //       from: 'reviews',
+  //       localField: 'place_id',
+  //       foreignField: 'place_reviews_id',
+  //       as: 'reviews'
+  //     }
+  //   },
+  //   content: {
+  //     field: 'content',
+  //     addFieldsStage:  { '$arrayElemAt': ['$content', 0] },
+  //     lookupStage: {
+  //       from: 'content',
+  //       localField: undefined,
+  //       foreignField: undefined,
+  //       as: 'content',
+  //       options: {
+  //         extras: {
+  //           let: { pid: '$content_id' }
+  //         },
+  //         pipeline: [
+  //           {
+  //             $match: {
+  //               $expr: {
+  //                 $eq: ['$_id', { $toObjectId: '$$pid' }]
+  //               }
+  //             }
+  //           },
+  //           {
+  //             $project: {
+  //               plainTextMarkFormat: true,
+  //               plainTextBase64: true,
+  //               speech: true
+  //             }
+  //           }
+  //         ]
+  //       }
+  //     }
+  //   },
+  //   isLiked: {
+  //     field: 'isLiked'
+  //   }
+  // }
 
   return async (data, user) => {
     try {
@@ -237,6 +245,7 @@ const findOneWithPipeline = (function() {
         fields,
         lang
       } = data
+      console.log('REQUESTED FIELDS: ', fields)
       // Khai báo pipeline. Stage đầu tiên là mình kiếm ra các document này trước.
       // Nếu như tìm được 1 document thì nó sẽ chỉ trả về một document trong một mảng.
       // Và vì mỗi place chỉ có một placeId cho nên là chỉ luôn tìm được một id.
@@ -250,51 +259,45 @@ const findOneWithPipeline = (function() {
       // Stage này hỗ trợ cho stage ở trên, dùng để thêm các field bên ngoài trong quá trình lookup
       // Trong đó có reviews và content.
       let addFieldsStage = []
-      // Check xem trong fields có chứa các place đặc biệt hay không? Nếu có thì true, ngược lại là fail.
-      let isContainOnlySpecialtyFields = fields.split(';').every(key => Boolean(specialtyFields[key]))
       if (lang) {
-        specialtyFields.content.lookupStage.options.pipeline[1].$project.speech = { [lang]: true }
-        specialtyFields.content.lookupStage.options.pipeline[1].$project.plainTextBase64 = { [lang]: true }
-        specialtyFields.content.lookupStage.options.pipeline[1].$project.plainTextMarkFormat = { [lang]: true }
+        SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.speech = { [lang]: true }
+        SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextBase64 = { [lang]: true }
+        SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextMarkFormat = { [lang]: true }
       }
 
-      for (let key in specialtyFields) {
+      for (let key in SpecialtyPlaceFields) {
         /*
           Ở đây mình check thêm việc là có phải một người dùng trong app yêu cầu hay không?
           Nếu có thì mình check luôn là place này có được người dùng yêu thích hay không?
           Hay là đã được người dùng này ghé thăm hay chưa? isLiked và isVisited cũng là 2
           fields đặc biệt, nhưng khác với 2 field kia là 2 fields này không dùng $lookup.
         */
-        if (user && key === specialtyFields.isLiked.field) {
-          if (!fields.includes(specialtyFields.isLiked.field)) fields += `;${specialtyFields.isLiked.field}`
-          addFieldsStage[0]['$addFields']['isLiked'] = {
-            $in: ['$place_id', user.savedPlaces]
-          }
-        } else if (fields && fields.includes(key)) {
-          /*
-            Check xem nếu như trong fields có chứa content. Thì đầu tiên là thêm
-            expression cho addFields stage. Tiếp theo là tạo lookup stage cho content.
-            Cuối cùng là add lookup stage vào trong pipeline luôn. Add luôn ở đây là bởi vì
-            nếu như không có thì addFields stage cũng sẽ là một mảng rỗng (với điều kiện là
-            trong fields không có reviews).
-          */
-          if (!addFieldsStage[0]) addFieldsStage[0] = {
-            '$addFields': {
-              [specialtyFields[key].field]: specialtyFields[key].addFieldsStage
+        if (key === SpecialtyPlaceFields.isLiked.field || key === SpecialtyPlaceFields.isVisited.field) {
+          if (Boolean(fields) && !fields.includes(key)) fields += `;${key}`
+          if (user) {
+            let arrVal = key === SpecialtyPlaceFields.isLiked.field ? user.savedPlaces : user.visitedPlaces
+            if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+            addFieldsStage[0]['$addFields'][key] = {
+              $in: ['$place_id', arrVal]
             }
           }
-          // Nếu nhưng trong addFields stage có fields nào đó rồi thì chỉ cần thêm fields mới vào.
-          else addFieldsStage[0]['$addFields'][specialtyFields[key].field] = specialtyFields[key].addFieldsStage
-          let lookupStage = createLookupStage(
-            specialtyFields[key].lookupStage.from,
-            specialtyFields[key].lookupStage.localField,
-            specialtyFields[key].lookupStage.foreignField,
-            specialtyFields[key].lookupStage.as,
-            specialtyFields[key].lookupStage.options
-          )
-          pipeline.push(lookupStage)
+          continue
         }
-        if (isContainOnlySpecialtyFields) fields = fields.replace(new RegExp(`${specialtyFields[key].field};|${specialtyFields[key].field}`), '')
+
+        for (let stageKey in SpecialtyPlaceFieldStageNames) {
+          if (fields && !fields.includes(key)) continue
+          let stage = SpecialtyPlaceFields[key].stages[stageKey]
+
+          if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+          if (stageKey === SpecialtyPlaceFieldStageNames.addFields) {
+            addFieldsStage[0]['$addFields'][key] = stage['$addFields']
+          }
+
+          if (stageKey === SpecialtyPlaceFieldStageNames.lookup) {
+            pipeline.push(stage)
+          }
+
+        }
       }
       // Tạo project stage cho các fields của place. Nếu như fields chỉ chứa các fields đặc biệt hoặc
       // là không có fields nào thì nó sẽ trả về rỗng.

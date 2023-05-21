@@ -77,6 +77,8 @@ const updateOneAndGetByCase = async(id, data, updateCase = 'default') => {
 
     let updateExpression = UserUpdateCases[updateCase](updateData)
 
+    console.log('Update Expr: ', updateExpression)
+
     const result = await getDB().collection(userCollectionName).findOneAndUpdate(
       // Phuong: Phải chuyển _id ở client thành ObjectId
       { _id: new ObjectId(id) },
