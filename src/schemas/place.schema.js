@@ -71,6 +71,9 @@ export const mapCollectionSchema = Joi.object({
   serves_wine: Joi.boolean().default(null),
   takeout: Joi.boolean().default(null),
 
+  // video_url
+  video_urls: Joi.array().default(null),
+
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp().default(null)
 })

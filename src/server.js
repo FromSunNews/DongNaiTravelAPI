@@ -8,6 +8,9 @@ import http from 'http'
 import { trackingUserLocationCurrent } from 'sockets/directionSocket'
 import { createTravelItinerary } from 'sockets/itinerarySocket'
 import { getNotifToUser } from 'sockets/notifSocket'
+import cookieParser from 'cookie-parser'
+import { apiV2 } from 'routes/v2'
+import { corsOptions } from 'config/cors'
 
 connectDB()
   .then(() => console.log('Connected successfully to database server!'))
@@ -28,18 +31,23 @@ const bootServer = () => {
     next()
   })
 
+  app.use(cookieParser())
+
   // Phuong: sử dụng cors cho web thôi còn mobile không có cũng đc
-  app.use(cors())
+  // app.use(cors(corsOptions))
 
   // Enable req.body data
   // Xử lý lỗi PayloadTooLargeError: request entity too large
   app.use(express.json({ limit: '50mb' }))
   app.use(express.urlencoded({ limit: '50mb' }))
 
-  // Phuong: cấu hình cho api chia ra cho ngọn
+  // Phuong: cấu hình cho api cho client app user
   app.use('/v1', apiV1)
-  // for real-time
+  // Phuong: cấu hình cho api cho client app admin
+  app.use('/v2', cors(corsOptions), apiV2)
 
+
+  // for real-time
   const socketIdMap = {}
 
   const server = http.createServer(app)
