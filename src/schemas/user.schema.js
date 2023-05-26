@@ -54,6 +54,7 @@ export const userCollectionSchema = Joi.object({
   receivePoints: Joi.number().integer().default(0),
   lostPoints: Joi.number().integer().default(0),
   otpToken: Joi.string().default(null),
+  rspwToken: Joi.string().default(null),
   birthday: Joi.date().timestamp().default(null),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp().default(null)
