@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.sortByStarLowToHigh = exports.sortByStarHighToLow = exports.sortByRatingLowToHigh = exports.sortByRatingHighToLow = exports.haverSineDistanceFormula = exports.getExpectedFieldsProjection = exports.filterRadiusProminenceOrNearBy = void 0;
 var _haversineDistance = _interopRequireDefault(require("haversine-distance"));
 var _lodash = require("lodash");
+var _constants = require("./constants");
 var haverSineDistanceFormula = function haverSineDistanceFormula(coor1, coor2) {
   return (0, _haversineDistance["default"])(coor1, coor2);
 };
@@ -78,9 +79,8 @@ var sortByRatingHighToLow = function sortByRatingHighToLow(arrPlaceTextSearch) {
  */
 exports.sortByRatingHighToLow = sortByRatingHighToLow;
 var getExpectedFieldsProjection = function getExpectedFieldsProjection(fields) {
-  var seperator = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ';';
   if (!fields) return {};
-  var fieldsArr = fields.split(seperator).map(function (field) {
+  var fieldsArr = fields.split(_constants.QueryValueSeperator).map(function (field) {
     return [field, true];
   });
   return Object.fromEntries(fieldsArr);

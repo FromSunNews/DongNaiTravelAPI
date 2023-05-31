@@ -4,7 +4,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.PlaceFindStages = void 0;
+exports.UserUpdateCases = exports.SpecialtyPlaceFields = exports.SpecialtyPlaceFieldStageNames = exports.PlaceFindStages = void 0;
 exports.createLookupStage = createLookupStage;
 exports.createObjectIDByString = createObjectIDByString;
 exports.createProjectionStage = createProjectionStage;
@@ -12,6 +12,7 @@ exports.getExpectedFieldsProjection = getExpectedFieldsProjection;
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var _mongodb = require("mongodb");
 var _constants = require("./constants");
+var _stages, _stages2, _stages3, _stages4;
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 /**
@@ -138,6 +139,21 @@ var PlaceFindStages = {
       }
     }
   },
+  name: {
+    expressions: {
+      'name': function name() {
+        var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+        return {
+          '$match': {
+            'name': {
+              $regex: value,
+              $options: 'i'
+            }
+          }
+        };
+      }
+    }
+  },
   type: {
     expressions: {
       'type': function type() {
@@ -170,4 +186,159 @@ var PlaceFindStages = {
     }
   }
 };
+
+/**
+ * Các trường hợp update của user sẽ chia ra làm nhiều phần.
+ * - Update mặc định: là kiểu update sẽ dùng toán tử $set và sẽ có cập nhật updatedAt.
+ * - Update các trường array, vì đa phần các trường array này có toán tử update riêng, và không cần phải cập nhật updatedAt
+ */
 exports.PlaceFindStages = PlaceFindStages;
+var UserUpdateCases = {
+  'default': function _default(newUserData) {
+    return {
+      $set: {
+        newUserData: newUserData
+      },
+      $currentDate: {
+        updatedAt: true
+      }
+    };
+  },
+  'addEle:savedPlaces': function addEleSavedPlaces(placeId) {
+    return {
+      $addToSet: {
+        'savedPlaces': placeId
+      }
+    };
+  },
+  'removeEle:savedPlaces': function removeEleSavedPlaces(placeId) {
+    return {
+      $pull: {
+        'savedPlaces': placeId
+      }
+    };
+  },
+  'addEle:follower': function addEleFollower(userId) {
+    return {
+      $addToSet: {
+        'followerIds': userId
+      }
+    };
+  },
+  'removeEle:follower': function removeEleFollower(userId) {
+    return {
+      $pull: {
+        'followerIds': userId
+      }
+    };
+  },
+  'addEle:visitedPlaces': function addEleVisitedPlaces(placeId) {
+    return {
+      $addToSet: {
+        'visitedPlaces': placeId
+      }
+    };
+  },
+  'removeEle:visitedPlaces': function removeEleVisitedPlaces(placeId) {
+    return {
+      $pull: {
+        'visitedPlaces': placeId
+      }
+    };
+  }
+};
+exports.UserUpdateCases = UserUpdateCases;
+var SpecialtyPlaceFieldStageNames = {
+  addFields: 'addFields',
+  lookup: 'lookup'
+};
+exports.SpecialtyPlaceFieldStageNames = SpecialtyPlaceFieldStageNames;
+var SpecialtyPlaceFields = {
+  place_photo: {
+    field: 'place_photo',
+    stages: (_stages = {}, (0, _defineProperty2["default"])(_stages, SpecialtyPlaceFieldStageNames.addFields, {
+      $addFields: {
+        '$arrayElemAt': [{
+          '$arrayElemAt': ['$place_photo.photos', 0]
+        }, 0]
+      }
+    }), (0, _defineProperty2["default"])(_stages, SpecialtyPlaceFieldStageNames.lookup, {
+      $lookup: {
+        from: 'photos',
+        localField: 'place_id',
+        foreignField: 'place_photos_id',
+        as: 'place_photo'
+      }
+    }), _stages)
+  },
+  place_photos: {
+    field: 'place_photos',
+    stages: (_stages2 = {}, (0, _defineProperty2["default"])(_stages2, SpecialtyPlaceFieldStageNames.addFields, {
+      $addFields: {
+        '$arrayElemAt': ['$place_photos.photos', 0]
+      }
+    }), (0, _defineProperty2["default"])(_stages2, SpecialtyPlaceFieldStageNames.lookup, {
+      $lookup: {
+        from: 'photos',
+        localField: 'place_id',
+        foreignField: 'place_photos_id',
+        as: 'place_photos'
+      }
+    }), _stages2)
+  },
+  reviews: {
+    field: 'reviews',
+    stages: (_stages3 = {}, (0, _defineProperty2["default"])(_stages3, SpecialtyPlaceFieldStageNames.addFields, {
+      $addFields: {
+        '$arrayElemAt': ['$reviews.reviews', 0]
+      }
+    }), (0, _defineProperty2["default"])(_stages3, SpecialtyPlaceFieldStageNames.lookup, {
+      $lookup: {
+        from: 'reviews',
+        localField: 'place_id',
+        foreignField: 'place_reviews_id',
+        as: 'reviews'
+      }
+    }), _stages3)
+  },
+  content: {
+    field: 'content',
+    stages: (_stages4 = {}, (0, _defineProperty2["default"])(_stages4, SpecialtyPlaceFieldStageNames.addFields, {
+      $addFields: {
+        '$arrayElemAt': ['$content', 0]
+      }
+    }), (0, _defineProperty2["default"])(_stages4, SpecialtyPlaceFieldStageNames.lookup, {
+      $lookup: {
+        from: 'content',
+        "let": {
+          pid: '$content_id'
+        },
+        pipeline: [{
+          $match: {
+            $expr: {
+              $eq: ['$_id', {
+                $toObjectId: '$$pid'
+              }]
+            }
+          }
+        }, {
+          $project: {
+            plainTextMarkFormat: true,
+            plainTextBase64: true,
+            speech: true
+          }
+        }],
+        as: 'content'
+      }
+    }), _stages4)
+  },
+  isLiked: {
+    field: 'isLiked',
+    stages: {}
+  },
+  isVisited: {
+    field: 'isVisited',
+    stages: {}
+  }
+};
+exports.SpecialtyPlaceFields = SpecialtyPlaceFields;

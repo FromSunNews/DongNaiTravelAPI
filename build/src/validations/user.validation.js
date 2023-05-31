@@ -10,54 +10,36 @@ var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/
 var _joi = _interopRequireDefault(require("joi"));
 var _constants = require("../utilities/constants");
 var _validators = require("../utilities/validators");
+var _user = require("../schemas/user.schema");
 var createNew = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(req, res, next) {
     var condition;
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
-          condition = _joi["default"].object({
-            email: _joi["default"].string().required().pattern(_validators.EMAIL_RULE).message('Email is invalid!'),
-            username: _joi["default"].string().required().min(2).max(30).trim(),
-            password: _joi["default"].string().required().pattern(_validators.PASSWORD_RULE).message('Password is invalid!'),
-            /**
-            * Phuong:
-            * Custom messsage với thằng Joi.ref khá khó tìm trong docs, cách tìm là bắt keyword để tìm những người từng hỏi chung 1 vấn đề,
-            * Ví dụ như link bên dưới, tìm ra cách custom bằng any.only trong hàm messages(json object)
-            * https://github.com/sideway/joi/issues/2147#issuecomment-537372635
-            * Lưu ý ở đầy có thể dùng confirmPassword: Joi.ref('password') luôn nhưng chưa tìm ra cách custom message, toàn lỗi :))
-            *
-            * Ngoài ra đây là để học cách custom message nhé, còn thực tế ở FE chúng ta đã validate đẹp rồi, thì thông thường BE cứ để default message trả về
-            * trường hợp nào thật sự cần làm đẹp message thì mới làm nhé
-            */
-            confirmPassword: _joi["default"].string().required().valid(_joi["default"].ref('password')).messages({
-              'any.only': 'Password Confirmation is not match',
-              'any.required': 'Password Confirmation is required'
-            }),
-            birthday: _joi["default"].date().timestamp(),
-            firstName: _joi["default"].string().min(2).max(30).trim(),
-            lastName: _joi["default"].string().min(2).max(30).trim()
-          });
+          condition = _user.userSignupSchema;
           _context.prev = 1;
-          _context.next = 4;
+          console.log('Start validate');
+          _context.next = 5;
           return condition.validateAsync(req.body, {
             abortEarly: false
           });
-        case 4:
+        case 5:
+          console.log('Pass validate');
           next();
-          _context.next = 10;
+          _context.next = 12;
           break;
-        case 7:
-          _context.prev = 7;
+        case 9:
+          _context.prev = 9;
           _context.t0 = _context["catch"](1);
           res.status(_constants.HttpStatusCode.BAD_REQUEST).json({
             errors: new Error(_context.t0).message
           });
-        case 10:
+        case 12:
         case "end":
           return _context.stop();
       }
-    }, _callee, null, [[1, 7]]);
+    }, _callee, null, [[1, 9]]);
   }));
   return function createNew(_x, _x2, _x3) {
     return _ref.apply(this, arguments);

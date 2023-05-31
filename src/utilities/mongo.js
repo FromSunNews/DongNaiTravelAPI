@@ -101,6 +101,11 @@ export const PlaceFindStages = {
       'high_rating': (filter = PlaceFindStageByQuality.high_rating) => ({ '$sort': filter })
     }
   },
+  name: {
+    expressions: {
+      'name': (value = '') => ({ '$match': { 'name': { $regex: value, $options: 'i' } } })
+    }
+  },
   type: {
     expressions: {
       'type': (value = '') => ({ '$match': { 'types': { '$all': value.split(';') } } })
@@ -134,6 +139,20 @@ export const SpecialtyPlaceFieldStageNames = {
 }
 
 export const SpecialtyPlaceFields = {
+  place_photo: {
+    field: 'place_photo',
+    stages: {
+      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': [{ '$arrayElemAt': ['$place_photo.photos', 0] }, 0] } },
+      [SpecialtyPlaceFieldStageNames.lookup]: {
+        $lookup: {
+          from: 'photos',
+          localField: 'place_id',
+          foreignField: 'place_photos_id',
+          as: 'place_photo'
+        }
+      }
+    }
+  },
   place_photos: {
     field: 'place_photos',
     stages: {
@@ -198,5 +217,11 @@ export const SpecialtyPlaceFields = {
   isVisited: {
     field: 'isVisited',
     stages: {}
+  },
+  _dataType: {
+    field: 'isLiked',
+    stages: {
+      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: 'place' }
+    }
   }
 }

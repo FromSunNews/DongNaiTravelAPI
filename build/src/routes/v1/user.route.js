@@ -23,6 +23,7 @@ router.route('/verify_otp').post(_user.UserController.verifyOtp);
 //   .put(AuthMiddleware.isAuthorized, UploadMiddleware.upload.single('avatar'), UserValidation.update, UserController.update)
 
 router.route('/update').post(_user2.UserValidation.update, _user.UserController.update);
+router.route('/update_by_case').post(_auth.AuthMiddleware.isAuthorized, _user.UserController.updateByCase);
 router.route('/reset_password').put(_user2.UserValidation.resetPassword, _user.UserController.resetPassword);
 router.route('/private_keys').get(_user.UserController.privateKeys);
 router.route('/get_map_user').post(_user.UserController.getMap);

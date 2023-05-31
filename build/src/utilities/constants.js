@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.TextToSpeechConstants = exports.MapApiStatus = exports.HttpStatusCode = exports.FilterConstants = void 0;
+exports.TextToSpeechConstants = exports.QueryValueSeperator = exports.PlaceFindStageByQuality = exports.PlaceFilterKeywords = exports.MapApiStatus = exports.HttpStatusCode = exports.FilterConstants = void 0;
 var HttpStatusCode = {
   OK: 200,
   BAD_REQUEST: 400,
@@ -45,6 +45,30 @@ var FilterConstants = {
   }
 };
 exports.FilterConstants = FilterConstants;
+var PlaceFindStageByQuality = {
+  'all': {},
+  'recommended': {
+    'isRecommended': true
+  },
+  'popular': {
+    'numberOfVisited': -1,
+    'user_ratings_total': -1
+  },
+  'most_visit': {
+    'numberOfVisited': -1
+  },
+  'high_rating': {
+    'rating': -1
+  }
+};
+exports.PlaceFindStageByQuality = PlaceFindStageByQuality;
+var PlaceFilterKeywords = {
+  quality: 'quality',
+  type: 'type'
+};
+exports.PlaceFilterKeywords = PlaceFilterKeywords;
+var QueryValueSeperator = ';';
+exports.QueryValueSeperator = QueryValueSeperator;
 var TextToSpeechConstants = {
   VN_FEMALE_1: {
     languageCode: 'vi',
