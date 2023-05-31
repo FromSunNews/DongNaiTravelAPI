@@ -21,20 +21,21 @@ var createNew = /*#__PURE__*/function () {
           return _user.UserService.createNew(req.body);
         case 3:
           result = _context.sent;
+          console.log('New user: ', result);
           res.status(_constants.HttpStatusCode.OK).json(result);
-          _context.next = 10;
+          _context.next = 11;
           break;
-        case 7:
-          _context.prev = 7;
+        case 8:
+          _context.prev = 8;
           _context.t0 = _context["catch"](0);
           res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
             errors: _context.t0.message
           });
-        case 10:
+        case 11:
         case "end":
           return _context.stop();
       }
-    }, _callee, null, [[0, 7]]);
+    }, _callee, null, [[0, 8]]);
   }));
   return function createNew(_x, _x2) {
     return _ref.apply(this, arguments);
@@ -243,37 +244,36 @@ var resetPassword = /*#__PURE__*/function () {
     return _ref8.apply(this, arguments);
   };
 }();
-var update = /*#__PURE__*/function () {
+var updateByCase = /*#__PURE__*/function () {
   var _ref9 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee9(req, res) {
-    var result;
+    var userId, result;
     return _regenerator["default"].wrap(function _callee9$(_context9) {
       while (1) switch (_context9.prev = _context9.next) {
         case 0:
           _context9.prev = 0;
-          _context9.next = 3;
-          return _user.UserService.update(req.body);
-        case 3:
+          userId = req.jwtDecoded._id;
+          _context9.next = 4;
+          return _user.UserService.updateByCase(userId, req.body);
+        case 4:
           result = _context9.sent;
-          res.status(_constants.HttpStatusCode.OK).json(result);
-          _context9.next = 10;
-          break;
-        case 7:
-          _context9.prev = 7;
+          return _context9.abrupt("return", res.status(_constants.HttpStatusCode.OK).json(result));
+        case 8:
+          _context9.prev = 8;
           _context9.t0 = _context9["catch"](0);
-          res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
+          return _context9.abrupt("return", res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
             errors: _context9.t0.message
-          });
-        case 10:
+          }));
+        case 11:
         case "end":
           return _context9.stop();
       }
-    }, _callee9, null, [[0, 7]]);
+    }, _callee9, null, [[0, 8]]);
   }));
-  return function update(_x17, _x18) {
+  return function updateByCase(_x17, _x18) {
     return _ref9.apply(this, arguments);
   };
 }();
-var getMap = /*#__PURE__*/function () {
+var update = /*#__PURE__*/function () {
   var _ref10 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(req, res) {
     var result;
     return _regenerator["default"].wrap(function _callee10$(_context10) {
@@ -281,30 +281,29 @@ var getMap = /*#__PURE__*/function () {
         case 0:
           _context10.prev = 0;
           _context10.next = 3;
-          return _user.UserService.getMap(req.body);
+          return _user.UserService.update(req.body);
         case 3:
           result = _context10.sent;
-          console.log('🚀 ~ file: user.controller.js:127 ~ getMap ~ result:', result);
           res.status(_constants.HttpStatusCode.OK).json(result);
-          _context10.next = 11;
+          _context10.next = 10;
           break;
-        case 8:
-          _context10.prev = 8;
+        case 7:
+          _context10.prev = 7;
           _context10.t0 = _context10["catch"](0);
           res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
             errors: _context10.t0.message
           });
-        case 11:
+        case 10:
         case "end":
           return _context10.stop();
       }
-    }, _callee10, null, [[0, 8]]);
+    }, _callee10, null, [[0, 7]]);
   }));
-  return function getMap(_x19, _x20) {
+  return function update(_x19, _x20) {
     return _ref10.apply(this, arguments);
   };
 }();
-var updateMap = /*#__PURE__*/function () {
+var getMap = /*#__PURE__*/function () {
   var _ref11 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(req, res) {
     var result;
     return _regenerator["default"].wrap(function _callee11$(_context11) {
@@ -312,29 +311,30 @@ var updateMap = /*#__PURE__*/function () {
         case 0:
           _context11.prev = 0;
           _context11.next = 3;
-          return _user.UserService.updateMap(req.body);
+          return _user.UserService.getMap(req.body);
         case 3:
           result = _context11.sent;
+          console.log('🚀 ~ file: user.controller.js:127 ~ getMap ~ result:', result);
           res.status(_constants.HttpStatusCode.OK).json(result);
-          _context11.next = 10;
+          _context11.next = 11;
           break;
-        case 7:
-          _context11.prev = 7;
+        case 8:
+          _context11.prev = 8;
           _context11.t0 = _context11["catch"](0);
           res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
             errors: _context11.t0.message
           });
-        case 10:
+        case 11:
         case "end":
           return _context11.stop();
       }
-    }, _callee11, null, [[0, 7]]);
+    }, _callee11, null, [[0, 8]]);
   }));
-  return function updateMap(_x21, _x22) {
+  return function getMap(_x21, _x22) {
     return _ref11.apply(this, arguments);
   };
 }();
-var getInfoUser = /*#__PURE__*/function () {
+var updateMap = /*#__PURE__*/function () {
   var _ref12 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee12(req, res) {
     var result;
     return _regenerator["default"].wrap(function _callee12$(_context12) {
@@ -342,7 +342,7 @@ var getInfoUser = /*#__PURE__*/function () {
         case 0:
           _context12.prev = 0;
           _context12.next = 3;
-          return _user.UserService.getInfoUser(req.body);
+          return _user.UserService.updateMap(req.body);
         case 3:
           result = _context12.sent;
           res.status(_constants.HttpStatusCode.OK).json(result);
@@ -360,8 +360,38 @@ var getInfoUser = /*#__PURE__*/function () {
       }
     }, _callee12, null, [[0, 7]]);
   }));
-  return function getInfoUser(_x23, _x24) {
+  return function updateMap(_x23, _x24) {
     return _ref12.apply(this, arguments);
+  };
+}();
+var getInfoUser = /*#__PURE__*/function () {
+  var _ref13 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee13(req, res) {
+    var result;
+    return _regenerator["default"].wrap(function _callee13$(_context13) {
+      while (1) switch (_context13.prev = _context13.next) {
+        case 0:
+          _context13.prev = 0;
+          _context13.next = 3;
+          return _user.UserService.getInfoUser(req.body);
+        case 3:
+          result = _context13.sent;
+          res.status(_constants.HttpStatusCode.OK).json(result);
+          _context13.next = 10;
+          break;
+        case 7:
+          _context13.prev = 7;
+          _context13.t0 = _context13["catch"](0);
+          res.status(_constants.HttpStatusCode.INTERNAL_SERVER).json({
+            errors: _context13.t0.message
+          });
+        case 10:
+        case "end":
+          return _context13.stop();
+      }
+    }, _callee13, null, [[0, 7]]);
+  }));
+  return function getInfoUser(_x25, _x26) {
+    return _ref13.apply(this, arguments);
   };
 }();
 var UserController = {
@@ -376,6 +406,7 @@ var UserController = {
   privateKeys: privateKeys,
   getMap: getMap,
   updateMap: updateMap,
-  getInfoUser: getInfoUser
+  getInfoUser: getInfoUser,
+  updateByCase: updateByCase
 };
 exports.UserController = UserController;
