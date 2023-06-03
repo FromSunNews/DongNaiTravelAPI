@@ -11,6 +11,9 @@ var _http = _interopRequireDefault(require("http"));
 var _directionSocket = require("./sockets/directionSocket");
 var _itinerarySocket = require("./sockets/itinerarySocket");
 var _notifSocket = require("./sockets/notifSocket");
+var _cookieParser = _interopRequireDefault(require("cookie-parser"));
+var _v2 = require("./routes/v2");
+var _cors2 = require("./config/cors");
 (0, _mongodb.connectDB)().then(function () {
   return console.log('Connected successfully to database server!');
 }).then(function () {
@@ -29,9 +32,10 @@ var bootServer = function bootServer() {
     res.set('Cache-Control', 'no-store');
     next();
   });
+  app.use((0, _cookieParser["default"])());
 
   // Phuong: sử dụng cors cho web thôi còn mobile không có cũng đc
-  app.use((0, _cors["default"])());
+  // app.use(cors(corsOptions))
 
   // Enable req.body data
   // Xử lý lỗi PayloadTooLargeError: request entity too large
@@ -42,10 +46,12 @@ var bootServer = function bootServer() {
     limit: '50mb'
   }));
 
-  // Phuong: cấu hình cho api chia ra cho ngọn
+  // Phuong: cấu hình cho api cho client app user
   app.use('/v1', _v.apiV1);
-  // for real-time
+  // Phuong: cấu hình cho api cho client app admin
+  app.use('/v2', (0, _cors["default"])(_cors2.corsOptions), _v2.apiV2);
 
+  // for real-time
   var socketIdMap = {};
   var server = _http["default"].createServer(app);
   var io = (0, _socket["default"])(server);

@@ -228,7 +228,7 @@ var findManyInLimitWithPipeline = function () {
             };
             fieldsInArr = (_fields = fields) === null || _fields === void 0 ? void 0 : _fields.split(';');
             if (!filters) {
-              _context7.next = 37;
+              _context7.next = 35;
               break;
             }
             _iterator = _createForOfIteratorHelper(filters);
@@ -236,45 +236,43 @@ var findManyInLimitWithPipeline = function () {
             _iterator.s();
           case 12:
             if ((_step = _iterator.n()).done) {
-              _context7.next = 29;
+              _context7.next = 27;
               break;
             }
             _filter = _step.value;
             _filter = decodeURIComponent(_filter);
             _filter$split = _filter.split(':'), _filter$split2 = (0, _slicedToArray2["default"])(_filter$split, 2), key = _filter$split2[0], value = _filter$split2[1];
-            console.log('Key: ', key);
-            console.log('Filter: ', _filter);
             hasQuality = key.includes('quality');
             expression = _mongo.PlaceFindStages.quality.expressions[value] || _mongo.PlaceFindStages[key].expressions[key];
             if (!expression()['$match']) findStage.others.push(expression());
             if (!hasQuality) {
-              _context7.next = 24;
+              _context7.next = 22;
               break;
             }
             findStage.match['$match'] = _objectSpread(_objectSpread({}, findStage.match['$match']), expression()['$match']);
-            return _context7.abrupt("continue", 27);
-          case 24:
+            return _context7.abrupt("continue", 25);
+          case 22:
             if (hasQuality) {
-              _context7.next = 27;
+              _context7.next = 25;
               break;
             }
             findStage.match['$match'] = _objectSpread(_objectSpread({}, findStage.match['$match']), expression(value)['$match']);
-            return _context7.abrupt("continue", 27);
-          case 27:
+            return _context7.abrupt("continue", 25);
+          case 25:
             _context7.next = 12;
             break;
-          case 29:
-            _context7.next = 34;
+          case 27:
+            _context7.next = 32;
             break;
-          case 31:
-            _context7.prev = 31;
+          case 29:
+            _context7.prev = 29;
             _context7.t0 = _context7["catch"](10);
             _iterator.e(_context7.t0);
-          case 34:
-            _context7.prev = 34;
+          case 32:
+            _context7.prev = 32;
             _iterator.f();
-            return _context7.finish(34);
-          case 37:
+            return _context7.finish(32);
+          case 35:
             // console.log('FIND STAGE: ', findStage)
 
             if (!addFieldsStage[0]) addFieldsStage[0] = {
@@ -322,10 +320,10 @@ var findManyInLimitWithPipeline = function () {
                     if (!addFieldsStage[0]) addFieldsStage[0] = {
                       '$addFields': {}
                     };
-                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.addFields) {
+                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.addFields && stage) {
                       addFieldsStage[0]['$addFields'][_key] = stage['$addFields'];
                     }
-                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.lookup) {
+                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.lookup && stage) {
                       pipeline.push(stage);
                     }
                     _context6.next = 5;
@@ -337,24 +335,24 @@ var findManyInLimitWithPipeline = function () {
               }, _loop);
             });
             _context7.t1 = _regenerator["default"].keys(_mongo.SpecialtyPlaceFields);
-          case 40:
+          case 38:
             if ((_context7.t2 = _context7.t1()).done) {
-              _context7.next = 48;
-              break;
-            }
-            _key = _context7.t2.value;
-            return _context7.delegateYield(_loop(_key), "t3", 43);
-          case 43:
-            _ret = _context7.t3;
-            if (!(_ret === "continue")) {
               _context7.next = 46;
               break;
             }
-            return _context7.abrupt("continue", 40);
-          case 46:
-            _context7.next = 40;
+            _key = _context7.t2.value;
+            return _context7.delegateYield(_loop(_key), "t3", 41);
+          case 41:
+            _ret = _context7.t3;
+            if (!(_ret === "continue")) {
+              _context7.next = 44;
+              break;
+            }
+            return _context7.abrupt("continue", 38);
+          case 44:
+            _context7.next = 38;
             break;
-          case 48:
+          case 46:
             projectStage.$project = _objectSpread({}, (0, _mongo.getExpectedFieldsProjection)(fields));
             pipeline.push.apply(pipeline, [findStage.match].concat((0, _toConsumableArray2["default"])(findStage.others)));
             if (Object.keys(projectStage.$project).length >= 1) pipeline.push(projectStage);
@@ -365,21 +363,21 @@ var findManyInLimitWithPipeline = function () {
             }]));
             console.log('Pipeline: ', pipeline);
             cursor = (0, _mongodb2.getDB)().collection(mapCollectionName).aggregate(pipeline);
-            _context7.next = 56;
+            _context7.next = 54;
             return cursor.toArray();
-          case 56:
+          case 54:
             result = _context7.sent;
             return _context7.abrupt("return", result);
-          case 60:
-            _context7.prev = 60;
+          case 58:
+            _context7.prev = 58;
             _context7.t4 = _context7["catch"](1);
             console.error(_context7.t4.message);
             return _context7.abrupt("return", undefined);
-          case 64:
+          case 62:
           case "end":
             return _context7.stop();
         }
-      }, _callee6, null, [[1, 60], [10, 31, 34, 37]]);
+      }, _callee6, null, [[1, 58], [10, 29, 32, 35]]);
     }));
     return function (_x8) {
       return _ref6.apply(this, arguments);
@@ -521,10 +519,10 @@ var findOneWithPipeline = function () {
                     if (!addFieldsStage[0]) addFieldsStage[0] = {
                       '$addFields': {}
                     };
-                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.addFields) {
+                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.addFields && stage) {
                       addFieldsStage[0]['$addFields'][key] = stage['$addFields'];
                     }
-                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.lookup) {
+                    if (stageKey === _mongo.SpecialtyPlaceFieldStageNames.lookup && stage) {
                       pipeline.push(stage);
                     }
                     _context8.next = 5;

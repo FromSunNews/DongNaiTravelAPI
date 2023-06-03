@@ -57,6 +57,7 @@ var userCollectionSchema = _joi["default"].object({
   receivePoints: _joi["default"].number().integer()["default"](0),
   lostPoints: _joi["default"].number().integer()["default"](0),
   otpToken: _joi["default"].string()["default"](null),
+  rspwToken: _joi["default"].string()["default"](null),
   birthday: _joi["default"].date().timestamp()["default"](null),
   createdAt: _joi["default"].date().timestamp('javascript')["default"](Date.now),
   updatedAt: _joi["default"].date().timestamp()["default"](null)
