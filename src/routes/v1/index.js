@@ -6,7 +6,10 @@ import { mapRoutes } from './map.route'
 import { directionRoutes } from './direction.route'
 import { contentRoutes } from './content.route'
 import { notifRoutes } from './notif.route'
+
 import { chatbotRoutes } from './chatbot.route'
+
+import { blogRoutes } from './blog.route'
 
 const router = express.Router()
 
@@ -30,7 +33,10 @@ router.use('/content', contentRoutes)
 /** notif APIs */
 router.use('/notif', notifRoutes)
 
-/** notif APIs */
+/** chatbot APIs */
 router.use('/chatbot', chatbotRoutes)
+
+/** Blog APIs */
+router.use('/blog', blogRoutes)
 
 export const apiV1 = router

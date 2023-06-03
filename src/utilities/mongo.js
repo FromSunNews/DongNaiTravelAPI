@@ -82,6 +82,69 @@ export function createLookupStage(
   return lookupObject
 }
 
+export function getPipelineStageWithSpecialtyFields(specialtyDataFields, fields, user) {
+  let fieldsInArr = fields?.split(';')
+  let addFieldsStage = []
+  let pipeline = []
+
+  for (let key in specialtyDataFields) {
+    if (key === specialtyDataFields.isLiked?.field || key === specialtyDataFields.isVisited?.field) {
+      if (Boolean(fields) && !fieldsInArr.find(field => field === key)) fields += `;${key}`
+      if (user) {
+        let arrVal = key === specialtyDataFields.isLiked.field ? user.savedPlaces : user.visitedPlaces
+        if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+        addFieldsStage[0]['$addFields'][key] = {
+          $in: ['$place_id', arrVal]
+        }
+      }
+      continue
+    }
+
+    for (let stageKey in SpecialtyFieldStageNames) {
+      if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
+      let stage = specialtyDataFields[key].stages[stageKey]
+
+      if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+      if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
+        addFieldsStage[0]['$addFields'][key] = stage['$addFields']
+      }
+
+      if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
+        pipeline.push(stage)
+      }
+    }
+  }
+  pipeline.push(...addFieldsStage)
+  return [pipeline, fields]
+}
+
+export function getFindStageWithFilters(findStages, filters) {
+  let findStage = {
+    match: {
+      $match: {}
+    },
+    others: []
+  }
+
+  for (let filter of filters) {
+    filter = decodeURIComponent(filter)
+    let [key, value] = filter.split(':')
+    let hasQuality = key.includes('quality')
+    let expression = findStages.quality.expressions[value] || findStages[key].expressions[key]
+    if (!expression()['$match']) findStage.others.push(expression())
+    if (hasQuality) {
+      findStage.match['$match'] = { ...findStage.match['$match'], ...expression()['$match'] }
+      continue
+    }
+    if (!hasQuality) {
+      findStage.match['$match'] = { ...findStage.match['$match'], ...expression(value)['$match'] }
+      continue
+    }
+  }
+
+  return findStage
+}
+
 /**
  * Là một object chứa các $match stage cho place (dùng cho việc tìm nhiều place).
  * Với mỗi key sẽ có một expression. Mỗi một expression này sẽ là một function dùng
@@ -99,6 +162,11 @@ export const PlaceFindStages = {
       'popular': (filter = PlaceFindStageByQuality.popular) => ({ '$sort': filter }),
       'most_visit': (filter = PlaceFindStageByQuality.most_visit) => ({ '$sort': filter }),
       'high_rating': (filter = PlaceFindStageByQuality.high_rating) => ({ '$sort': filter })
+    }
+  },
+  name: {
+    expressions: {
+      'name': (value = '') => ({ '$match': { 'name': { $regex: value, $options: 'i' } } })
     }
   },
   type: {
@@ -128,17 +196,31 @@ export const UserUpdateCases = {
   'removeEle:visitedPlaces': (placeId) => ({ $pull: { 'visitedPlaces': placeId } })
 }
 
-export const SpecialtyPlaceFieldStageNames = {
+export const SpecialtyFieldStageNames = {
   addFields: 'addFields',
   lookup: 'lookup'
 }
 
 export const SpecialtyPlaceFields = {
+  place_photo: {
+    field: 'place_photo',
+    stages: {
+      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': [{ '$arrayElemAt': ['$place_photo.photos', 0] }, 0] } },
+      [SpecialtyFieldStageNames.lookup]: {
+        $lookup: {
+          from: 'photos',
+          localField: 'place_id',
+          foreignField: 'place_photos_id',
+          as: 'place_photo'
+        }
+      }
+    }
+  },
   place_photos: {
     field: 'place_photos',
     stages: {
-      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$place_photos.photos', 0] } },
-      [SpecialtyPlaceFieldStageNames.lookup]: {
+      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$place_photos.photos', 0] } },
+      [SpecialtyFieldStageNames.lookup]: {
         $lookup: {
           from: 'photos',
           localField: 'place_id',
@@ -151,8 +233,8 @@ export const SpecialtyPlaceFields = {
   reviews: {
     field: 'reviews',
     stages: {
-      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$reviews.reviews', 0] } },
-      [SpecialtyPlaceFieldStageNames.lookup]: {
+      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$reviews.reviews', 0] } },
+      [SpecialtyFieldStageNames.lookup]: {
         $lookup: {
           from: 'reviews',
           localField: 'place_id',
@@ -165,8 +247,8 @@ export const SpecialtyPlaceFields = {
   content: {
     field: 'content',
     stages: {
-      [SpecialtyPlaceFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$content', 0] } },
-      [SpecialtyPlaceFieldStageNames.lookup]: {
+      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$content', 0] } },
+      [SpecialtyFieldStageNames.lookup]: {
         $lookup: {
           from: 'content',
           let: { pid: '$content_id' },
@@ -198,5 +280,11 @@ export const SpecialtyPlaceFields = {
   isVisited: {
     field: 'isVisited',
     stages: {}
+  },
+  _dataType: {
+    field: 'isLiked',
+    stages: {
+      [SpecialtyFieldStageNames.addFields]: { $addFields: 'place' }
+    }
   }
 }

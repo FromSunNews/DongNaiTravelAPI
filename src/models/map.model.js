@@ -13,7 +13,7 @@ import {
   getExpectedFieldsProjection,
   PlaceFindStages,
   SpecialtyPlaceFields,
-  SpecialtyPlaceFieldStageNames
+  SpecialtyFieldStageNames
 } from 'utilities/mongo'
 
 import { mapCollectionSchema } from 'schemas/place.schema'
@@ -101,8 +101,9 @@ const findManyInLimitWithPipeline = (function() {
     let { filter, fields, limit = 10, skip = 0, user } = data
     try {
       // Đầu tiên thì split cái filter ra bằng khoảng trắng;
-      let filters = filter.split(' ')
-      let addFieldsStage = { $addFields: {} }
+      let filters = filter?.split(',')
+      let pipeline = []
+      let addFieldsStage = []
       let projectStage = {
         '$project': {}
       }
@@ -113,55 +114,70 @@ const findManyInLimitWithPipeline = (function() {
         },
         others: []
       }
-
-      for (let filter of filters) {
-        let [key, value] = filter.split(':')
-        let hasQuality = key.includes('quality')
-        let expression = PlaceFindStages.quality.expressions[value] || PlaceFindStages[key].expressions[key]
-        if (!expression()['$match']) findStage.others.push(expression())
-        if (hasQuality) {
-          findStage.match['$match'] = { ...findStage.match['$match'], ...expression()['$match'] }
-          continue
+      let fieldsInArr = fields?.split(';')
+      if (filters)
+        for (let filter of filters) {
+          filter = decodeURIComponent(filter)
+          let [key, value] = filter.split(':')
+          let hasQuality = key.includes('quality')
+          let expression = PlaceFindStages.quality.expressions[value] || PlaceFindStages[key].expressions[key]
+          if (!expression()['$match']) findStage.others.push(expression())
+          if (hasQuality) {
+            findStage.match['$match'] = { ...findStage.match['$match'], ...expression()['$match'] }
+            continue
+          }
+          if (!hasQuality) {
+            findStage.match['$match'] = { ...findStage.match['$match'], ...expression(value)['$match'] }
+            continue
+          }
         }
-        if (!hasQuality) {
-          findStage.match['$match'] = { ...findStage.match['$match'], ...expression(value)['$match'] }
-          continue
-        }
-      }
 
       // console.log('FIND STAGE: ', findStage)
 
-      addFieldsStage.$addFields = {
-        place_photos: { '$arrayElemAt': ['$place_photos.photos', 0] }
-      }
-      if (user) {
-        addFieldsStage.$addFields[SpecialtyPlaceFields.isLiked.field] = {
-          $in: ['$place_id', user.savedPlaces]
+      if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+
+      for (let key in SpecialtyPlaceFields) {
+        /*
+          Ở đây mình check thêm việc là có phải một người dùng trong app yêu cầu hay không?
+          Nếu có thì mình check luôn là place này có được người dùng yêu thích hay không?
+          Hay là đã được người dùng này ghé thăm hay chưa? isLiked và isVisited cũng là 2
+          fields đặc biệt, nhưng khác với 2 field kia là 2 fields này không dùng $lookup.
+        */
+        if (key === SpecialtyPlaceFields.isLiked.field || key === SpecialtyPlaceFields.isVisited.field) {
+          if (Boolean(fields) && !fieldsInArr.find(field => field === key)) fields += `;${key}`
+          if (user) {
+            let arrVal = key === SpecialtyPlaceFields.isLiked.field ? user.savedPlaces : user.visitedPlaces
+            if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+            addFieldsStage[0]['$addFields'][key] = {
+              $in: ['$place_id', arrVal]
+            }
+          }
+          continue
         }
-        addFieldsStage.$addFields[SpecialtyPlaceFields.isVisited.field] = {
-          $in: ['$place_id', user.visitedPlaces]
+
+        for (let stageKey in SpecialtyFieldStageNames) {
+          if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
+          let stage = SpecialtyPlaceFields[key].stages[stageKey]
+
+          if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
+          if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
+            addFieldsStage[0]['$addFields'][key] = stage['$addFields']
+          }
+
+          if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
+            pipeline.push(stage)
+          }
+
         }
       }
 
-      if (fields) fields += `;place_photos;${SpecialtyPlaceFields.isLiked.field};${SpecialtyPlaceFields.isVisited.field}`
       projectStage.$project = { ...getExpectedFieldsProjection(fields) }
 
-      const pipeline = [
-        findStage.match,
-        ...findStage.others,
-        {
-          '$lookup': {
-            'from': 'photos',
-            'localField': 'place_id',
-            'foreignField': 'place_photos_id',
-            'as': 'place_photos'
-          }
-        }
-      ]
+      pipeline.push(findStage.match, ...findStage.others)
 
       if (Object.keys(projectStage.$project).length >= 1) pipeline.push(projectStage)
 
-      pipeline.push(addFieldsStage, { '$skip': skip }, { '$limit': limit })
+      pipeline.push(...addFieldsStage, { '$skip': skip }, { '$limit': limit })
       console.log('Pipeline: ', pipeline)
       const cursor = getDB().collection(mapCollectionName).aggregate(pipeline)
       const result = await cursor.toArray()
@@ -261,9 +277,9 @@ const findOneWithPipeline = (function() {
       let addFieldsStage = []
       if (lang) {
         SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.speech = { [lang]: true }
-        SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextBase64 = { [lang]: true }
         SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextMarkFormat = { [lang]: true }
       }
+      let fieldsInArr = fields?.split(';')
 
       for (let key in SpecialtyPlaceFields) {
         /*
@@ -273,7 +289,7 @@ const findOneWithPipeline = (function() {
           fields đặc biệt, nhưng khác với 2 field kia là 2 fields này không dùng $lookup.
         */
         if (key === SpecialtyPlaceFields.isLiked.field || key === SpecialtyPlaceFields.isVisited.field) {
-          if (Boolean(fields) && !fields.includes(key)) fields += `;${key}`
+          if (Boolean(fields) && !fieldsInArr.find(field => field === key)) fields += `;${key}`
           if (user) {
             let arrVal = key === SpecialtyPlaceFields.isLiked.field ? user.savedPlaces : user.visitedPlaces
             if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
@@ -284,16 +300,16 @@ const findOneWithPipeline = (function() {
           continue
         }
 
-        for (let stageKey in SpecialtyPlaceFieldStageNames) {
-          if (fields && !fields.includes(key)) continue
+        for (let stageKey in SpecialtyFieldStageNames) {
+          if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
           let stage = SpecialtyPlaceFields[key].stages[stageKey]
 
           if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-          if (stageKey === SpecialtyPlaceFieldStageNames.addFields) {
+          if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
             addFieldsStage[0]['$addFields'][key] = stage['$addFields']
           }
 
-          if (stageKey === SpecialtyPlaceFieldStageNames.lookup) {
+          if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
             pipeline.push(stage)
           }
 
