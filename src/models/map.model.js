@@ -13,7 +13,7 @@ import {
   getExpectedFieldsProjection,
   PlaceFindStages,
   SpecialtyPlaceFields,
-  SpecialtyPlaceFieldStageNames
+  SpecialtyFieldStageNames
 } from 'utilities/mongo'
 
 import { mapCollectionSchema } from 'schemas/place.schema'
@@ -155,16 +155,16 @@ const findManyInLimitWithPipeline = (function() {
           continue
         }
 
-        for (let stageKey in SpecialtyPlaceFieldStageNames) {
+        for (let stageKey in SpecialtyFieldStageNames) {
           if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
           let stage = SpecialtyPlaceFields[key].stages[stageKey]
 
           if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-          if (stageKey === SpecialtyPlaceFieldStageNames.addFields && stage) {
+          if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
             addFieldsStage[0]['$addFields'][key] = stage['$addFields']
           }
 
-          if (stageKey === SpecialtyPlaceFieldStageNames.lookup && stage) {
+          if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
             pipeline.push(stage)
           }
 
@@ -277,7 +277,6 @@ const findOneWithPipeline = (function() {
       let addFieldsStage = []
       if (lang) {
         SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.speech = { [lang]: true }
-        SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextBase64 = { [lang]: true }
         SpecialtyPlaceFields.content.stages['lookup']['$lookup'].pipeline[1].$project.plainTextMarkFormat = { [lang]: true }
       }
       let fieldsInArr = fields?.split(';')
@@ -301,16 +300,16 @@ const findOneWithPipeline = (function() {
           continue
         }
 
-        for (let stageKey in SpecialtyPlaceFieldStageNames) {
+        for (let stageKey in SpecialtyFieldStageNames) {
           if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
           let stage = SpecialtyPlaceFields[key].stages[stageKey]
 
           if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-          if (stageKey === SpecialtyPlaceFieldStageNames.addFields && stage) {
+          if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
             addFieldsStage[0]['$addFields'][key] = stage['$addFields']
           }
 
-          if (stageKey === SpecialtyPlaceFieldStageNames.lookup && stage) {
+          if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
             pipeline.push(stage)
           }
 

@@ -63,6 +63,8 @@ var mapCollectionSchema = _joi["default"].object({
   serves_vegetarian_food: _joi["default"]["boolean"]()["default"](null),
   serves_wine: _joi["default"]["boolean"]()["default"](null),
   takeout: _joi["default"]["boolean"]()["default"](null),
+  // video_url
+  video_urls: _joi["default"].array()["default"](null),
   createdAt: _joi["default"].date().timestamp('javascript')["default"](Date.now),
   updatedAt: _joi["default"].date().timestamp()["default"](null)
 });

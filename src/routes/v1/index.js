@@ -6,6 +6,7 @@ import { mapRoutes } from './map.route'
 import { directionRoutes } from './direction.route'
 import { contentRoutes } from './content.route'
 import { notifRoutes } from './notif.route'
+import { blogRoutes } from './blog.route'
 
 const router = express.Router()
 
@@ -28,5 +29,8 @@ router.use('/content', contentRoutes)
 
 /** notif APIs */
 router.use('/notif', notifRoutes)
+
+/** Blog APIs */
+router.use('/blog', blogRoutes)
 
 export const apiV1 = router

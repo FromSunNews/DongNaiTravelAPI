@@ -339,6 +339,12 @@ var SpecialtyPlaceFields = {
   isVisited: {
     field: 'isVisited',
     stages: {}
+  },
+  _dataType: {
+    field: 'isLiked',
+    stages: (0, _defineProperty2["default"])({}, SpecialtyPlaceFieldStageNames.addFields, {
+      $addFields: 'place'
+    })
   }
 };
 exports.SpecialtyPlaceFields = SpecialtyPlaceFields;

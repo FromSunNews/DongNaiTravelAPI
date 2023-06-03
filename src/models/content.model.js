@@ -9,7 +9,7 @@ const contentCollectionSchema = Joi.object({
   // whole is content
   plainText: Joi.object().default({}),
   // text-to-speech
-  plainTextBase64: Joi.object().default({}),
+  speech: Joi.object().default(null),
   // For markdown
   plainTextMarkFormat: Joi.object().default({}),
 

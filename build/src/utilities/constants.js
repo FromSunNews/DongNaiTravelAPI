@@ -3,7 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.TextToSpeechConstants = exports.QueryValueSeperator = exports.PlaceFindStageByQuality = exports.PlaceFilterKeywords = exports.MapApiStatus = exports.HttpStatusCode = exports.FilterConstants = void 0;
+exports.WHITELIST_DOMAINS = exports.WEBSITE_DOMAIN = exports.TextToSpeechConstants = exports.QueryValueSeperator = exports.PlaceFindStageByQuality = exports.PlaceFilterKeywords = exports.MapApiStatus = exports.HttpStatusCode = exports.FilterConstants = exports.DEFAULT_ITEMS_PER_PAGE = exports.DEFAULT_CURRENT_PAGE = void 0;
+var _environtment = require("../config/environtment");
 var HttpStatusCode = {
   OK: 200,
   BAD_REQUEST: 400,
@@ -104,3 +105,15 @@ var TextToSpeechConstants = {
   }
 };
 exports.TextToSpeechConstants = TextToSpeechConstants;
+var WHITELIST_DOMAINS = ['http://localhost:3000', 'http://localhost:3001', 'https://dong-nai-travel-admin.vercel.app'];
+exports.WHITELIST_DOMAINS = WHITELIST_DOMAINS;
+var websiteDomain = 'http://localhost:3000';
+if (_environtment.env.BUILD_MODE === 'production') {
+  websiteDomain = 'https://dong-nai-travel-admin.vercel.app';
+}
+var WEBSITE_DOMAIN = websiteDomain;
+exports.WEBSITE_DOMAIN = WEBSITE_DOMAIN;
+var DEFAULT_ITEMS_PER_PAGE = 12;
+exports.DEFAULT_ITEMS_PER_PAGE = DEFAULT_ITEMS_PER_PAGE;
+var DEFAULT_CURRENT_PAGE = 1;
+exports.DEFAULT_CURRENT_PAGE = DEFAULT_CURRENT_PAGE;
