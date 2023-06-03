@@ -564,7 +564,7 @@ const getWeatherForecast = async (data) => {
           lat: data.latitude,
           lon: data.longitude,
           units: 'metric',
-          cnt: 40, // number of list (maximum 40 item ~ 5 days)
+          cnt: 10, // number of list (maximum 40 item ~ 5 days)
           lang: env.LANGUAGE_CODE_DEFAULT,
           appid: env.OPEN_WEATHER_API_KEY
         }

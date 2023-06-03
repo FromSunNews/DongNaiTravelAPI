@@ -45,6 +45,23 @@ const getWeatherForecast = async (coor) => {
   }
 }
 
+// https://openweathermap.org/forecast5
+const getWeatherForecastByCity = async (address) => {
+  // coor = {
+  //   longitude: '',
+  //   latitude: ''
+  // }
+  const params = {
+    q: address,
+    units: 'metric',
+    cnt: 40, // number of list (maximum 40 item ~ 5 days)
+    lang: env.LANGUAGE_CODE_DEFAULT,
+    appid: env.OPEN_WEATHER_API_KEY
+  }
+  const response = await axios.get(`${env.OPEN_WEATHER_BASE_URL}/data/2.5/forecast`, { params })
+  return response.data
+}
+
 // https://openweathermap.org/api/geocoding-api#reverse
 const getGeocodingReverse = async (coor) => {
   // coor = {
@@ -69,8 +86,37 @@ const getGeocodingReverse = async (coor) => {
   }
 }
 
+
+// https://openweathermap.org/api/geocoding-api#reverse
+const getGeocodingDirect = async (address) => {
+  // coor = {
+  //   longitude: '',
+  //   latitude: ''
+  // }
+  try {
+    const params = {
+      q: address,
+      limit: 1,
+      appid: env.OPEN_WEATHER_API_KEY
+    }
+    const response = await axios.get(`${env.OPEN_WEATHER_BASE_URL}/geo/1.0/direct`, { params })
+
+    console.log('🚀 ~ file: OpenWeatherProvider.js:67 ~ getGeocodingReverse ~ response.data[0].name:', response.data[0].name)
+    return {
+      name: response.data[0].name,
+      coor: {
+        longitude: response.data[0].lon,
+        latitude: response.data[0].lat
+      }
+    }
+  } catch (error) {
+    throw new Error(`Error in getMessage: ${error.message}`)
+  }
+}
 export const OpenWeatherProvider = {
   getWeatherCurrent,
   getWeatherForecast,
-  getGeocodingReverse
+  getGeocodingReverse,
+  getWeatherForecastByCity,
+  getGeocodingDirect
 }

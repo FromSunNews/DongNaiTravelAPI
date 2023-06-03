@@ -57,5 +57,6 @@ export const env = {
 
   PLACE_PHOTOS_API: process.env.PLACE_PHOTOS_API,
   PLACE_TYPES_API: process.env.PLACE_TYPES_API,
-  PLACE_REVIEWS_API: process.env.PLACE_REVIEWS_API
+  PLACE_REVIEWS_API: process.env.PLACE_REVIEWS_API,
+  DF_CONFIG: process.env.DF_CONFIG
 }
