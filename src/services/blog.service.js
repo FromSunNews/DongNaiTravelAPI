@@ -126,8 +126,20 @@ async function getBlogs(query) {
   }
 }
 
+async function updateOneBlogByCase(data) {
+  try {
+    let { blogId, updateData, updateCase } = data
+    let result = await BlogModel.updateOneBlogByCase(blogId, updateData, updateCase)
+    return result
+  } catch (error) {
+    console.error(error.message)
+    return undefined
+  }
+}
+
 export const BlogService = {
   createBlog,
   getBlog,
-  getBlogs
+  getBlogs,
+  updateOneBlogByCase
 }

@@ -1,5 +1,8 @@
 import { ObjectId } from 'mongodb'
-import { PlaceFindStageByQuality } from './constants'
+
+import {
+  LookupArraysProps
+} from 'types'
 
 /**
  * Hàm này nhận vào 2 tham số là `fields` và `seperator` (không bắt buộc), đều là string.
@@ -53,6 +56,11 @@ export function createObjectIDByString(id) {
   return i
 }
 
+export const AggregationStageNames = {
+  addFields: 'addFields',
+  lookup: 'lookup'
+}
+
 /**
  * Hàm này dùng để tạo ra một lookup stage (bao gồm pipeline)
  * @param {string} from
@@ -82,34 +90,57 @@ export function createLookupStage(
   return lookupObject
 }
 
-export function getPipelineStageWithSpecialtyFields(specialtyDataFields, fields, user) {
+/**
+ * Hàm này dùng để lấy ra các pipeline stages cho các trường dữ liệu đặc biệt của document mà
+ * đã được setup trong `expression.js` của model. Hàm này trả về một pipeline và `fields` đã được
+ * thay đổi trong quá trình tạo các stages.
+ *
+ * `SpecialtyDataFields` là một object có chứa các thuộc tính sau:
+ * - Field: là tên của field data,
+ * - Stages: là các stage ($addField, $lookup) dã được fix cứng
+ * - FunctionalStage: là các function trả về stages.
+ *
+ * @param {*} specialtyDataFields
+ * @param {string} fields
+ * @param {} user
+ * @returns
+ */
+export function getPipelineStagesWithSpecialtyFields(specialtyDataFields, fields, user) {
   let fieldsInArr = fields?.split(';')
   let addFieldsStage = []
   let pipeline = []
 
-  for (let key in specialtyDataFields) {
-    if (key === specialtyDataFields.isLiked?.field || key === specialtyDataFields.isVisited?.field) {
-      if (Boolean(fields) && !fieldsInArr.find(field => field === key)) fields += `;${key}`
+  for (let specialtyField in specialtyDataFields) {
+    if (specialtyField === specialtyDataFields.isLiked?.field || specialtyField === specialtyDataFields.isVisited?.field) {
+      if (Boolean(fields) && !fieldsInArr.find(field => field === specialtyField)) fields += `;${specialtyField}`
       if (user) {
-        let arrVal = key === specialtyDataFields.isLiked.field ? user.savedPlaces : user.visitedPlaces
+        // functionalStage = user => ({ $addFields: isLiked: { $in: [{ $toString: '$_id' }, user[key]] } })
+        // Vì có một isLike, isVisited (có thể bỏ) chỉ có duy nhất một stage, cho nên gán như này luôn
+        let functionalStage = specialtyDataFields[specialtyField].functionalStages['addFields']
+        let stage = functionalStage(user)
         if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-        addFieldsStage[0]['$addFields'][key] = {
-          $in: ['$place_id', arrVal]
+        addFieldsStage[0]['$addFields'] = {
+          ...addFieldsStage[0]['$addFields'],
+          ...stage['$addFields']
         }
       }
       continue
     }
 
-    for (let stageKey in SpecialtyFieldStageNames) {
-      if (Boolean(fields) && !fieldsInArr.find(field => field === key)) continue
-      let stage = specialtyDataFields[key].stages[stageKey]
+    for (let stageName in AggregationStageNames) {
+      if (Boolean(fields) && !fieldsInArr.find(field => field === specialtyField)) continue
+      let stage = specialtyDataFields[specialtyField].stages[stageName]
 
       if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-      if (stageKey === SpecialtyFieldStageNames.addFields && stage) {
-        addFieldsStage[0]['$addFields'][key] = stage['$addFields']
+      if (stageName === AggregationStageNames.addFields && stage) {
+        // Add tên field + expression
+        addFieldsStage[0]['$addFields'] = {
+          ...addFieldsStage[0]['$addFields'],
+          ...stage['$addFields']
+        }
       }
 
-      if (stageKey === SpecialtyFieldStageNames.lookup && stage) {
+      if (stageName === AggregationStageNames.lookup && stage) {
         pipeline.push(stage)
       }
     }
@@ -118,6 +149,13 @@ export function getPipelineStageWithSpecialtyFields(specialtyDataFields, fields,
   return [pipeline, fields]
 }
 
+/**
+ * Hàm này dùng để lấy find stage của một hay nhiều document nào đó mà đã được setup trong
+ * `expression.js` của model.
+ * @param {*} findStages
+ * @param {Array<string>} filters
+ * @returns
+ */
 export function getFindStageWithFilters(findStages, filters) {
   let findStage = {
     match: {
@@ -145,146 +183,57 @@ export function getFindStageWithFilters(findStages, filters) {
   return findStage
 }
 
-/**
- * Là một object chứa các $match stage cho place (dùng cho việc tìm nhiều place).
- * Với mỗi key sẽ có một expression. Mỗi một expression này sẽ là một function dùng
- * để tạo stage.
- *
- * Có 2 key chính, một là quality (trường hợp đặc biệt) và others. Others là các query
- * trường dữ liệu cụ thể, còn quality thì phải có một xíu tính toán.
- */
-export const PlaceFindStages = {
-  // Special filter
-  quality: {
-    expressions: {
-      'all': (filter = PlaceFindStageByQuality.all) => ({ '$match': filter }),
-      'recommended': (filter = PlaceFindStageByQuality.recommended) => ({ '$match': filter }),
-      'popular': (filter = PlaceFindStageByQuality.popular) => ({ '$sort': filter }),
-      'most_visit': (filter = PlaceFindStageByQuality.most_visit) => ({ '$sort': filter }),
-      'high_rating': (filter = PlaceFindStageByQuality.high_rating) => ({ '$sort': filter })
-    }
+export const SpecialUpdateCases = {
+  default: {
+    name: 'default',
+    /**
+     * Lấy biểu thức để update document.
+     * Trả về theo dạng __`__`[expression, extUpdateFilter]`__`__
+     * @param {any} data Dữ liệu cần update
+     * @returns
+     */
+    getExprNExtUpdateFilter: (data) => [{ $set: data, $currentDate: { updatedAt: true } }]
   },
-  name: {
-    expressions: {
-      'name': (value = '') => ({ '$match': { 'name': { $regex: value, $options: 'i' } } })
-    }
+  addEle: {
+    name: 'addEle',
+    /**
+     * Lấy biểu thức để thêm một `value` vào `field`, là field có `type=array` trong document.
+     * Trả về theo dạng __`[expression, extUpdateFilter]`__
+     * @param {string} field Tên của field cần thêm element.
+     * @param {any} value Giá trị cần thêm.
+     * @returns
+     */
+    getExprNExtUpdateFilter: (field, value) => [{ $addToSet: { [field]: value } }]
   },
-  type: {
-    expressions: {
-      'type': (value = '') => ({ '$match': { 'types': { '$all': value.split(';') } } })
-    }
+  removeEle: {
+    name: 'removeEle',
+    /**
+     * Lấy biểu thức để bỏ `value` ra khỏi `field`, là field có `type=array` trong document.
+     * Trả về theo dạng __`[expression, extUpdateFilter]`__
+     * @param {string} field Tên của field cần bỏ element.
+     * @param {any} value Giá trị cần bỏ.
+     * @returns
+     */
+    getExprNExtUpdateFilter: (field, value) => [{ $pull: { [field]: value } }]
   },
-  except_by_placeid: {
-    expressions: {
-      'except_by_placeid': id => id ? ({ '$match': { place_id: { '$not': { '$eq': id } } } }) : ({ '$match': {} })
-    }
-  }
-}
-
-/**
- * Các trường hợp update của user sẽ chia ra làm nhiều phần.
- * - Update mặc định: là kiểu update sẽ dùng toán tử $set và sẽ có cập nhật updatedAt.
- * - Update các trường array, vì đa phần các trường array này có toán tử update riêng, và không cần phải cập nhật updatedAt
- */
-export const UserUpdateCases = {
-  'default': (newUserData) => ({ $set: { newUserData }, $currentDate: { updatedAt: true } }),
-  'addEle:savedPlaces': (placeId) => ({ $addToSet: { 'savedPlaces': placeId } }),
-  'removeEle:savedPlaces': (placeId) => ({ $pull: { 'savedPlaces': placeId } }),
-  'addEle:follower': (userId) => ({ $addToSet: { 'followerIds': userId } }),
-  'removeEle:follower': (userId) => ({ $pull: { 'followerIds': userId } }),
-  'addEle:visitedPlaces': (placeId) => ({ $addToSet: { 'visitedPlaces': placeId } }),
-  'removeEle:visitedPlaces': (placeId) => ({ $pull: { 'visitedPlaces': placeId } })
-}
-
-export const SpecialtyFieldStageNames = {
-  addFields: 'addFields',
-  lookup: 'lookup'
-}
-
-export const SpecialtyPlaceFields = {
-  place_photo: {
-    field: 'place_photo',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': [{ '$arrayElemAt': ['$place_photo.photos', 0] }, 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'photos',
-          localField: 'place_id',
-          foreignField: 'place_photos_id',
-          as: 'place_photo'
-        }
-      }
-    }
+  inc: {
+    name: 'inc',
+    /**
+     * Cái này chỉ dùng với những field có `type=number`
+     * Trả về theo dạng __`[expression, extUpdateFilter]`__
+     * @param {string} field Tên của field cần tăng `value`.
+     * @returns
+     */
+    getExprNExtUpdateFilter: (field) => [{ $inc: { [field]: 1 } }]
   },
-  place_photos: {
-    field: 'place_photos',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$place_photos.photos', 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'photos',
-          localField: 'place_id',
-          foreignField: 'place_photos_id',
-          as: 'place_photos'
-        }
-      }
-    }
-  },
-  reviews: {
-    field: 'reviews',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$reviews.reviews', 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'reviews',
-          localField: 'place_id',
-          foreignField: 'place_reviews_id',
-          as: 'reviews'
-        }
-      }
-    }
-  },
-  content: {
-    field: 'content',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$content', 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'content',
-          let: { pid: '$content_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', { $toObjectId: '$$pid' }]
-                }
-              }
-            },
-            {
-              $project: {
-                plainTextMarkFormat: true,
-                plainTextBase64: true,
-                speech: true
-              }
-            }
-          ],
-          as: 'content'
-        }
-      }
-    }
-  },
-  isLiked: {
-    field: 'isLiked',
-    stages: {}
-  },
-  isVisited: {
-    field: 'isVisited',
-    stages: {}
-  },
-  _dataType: {
-    field: 'isLiked',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: 'place' }
-    }
+  dec: {
+    name: 'dec',
+    /**
+     * Cái này chỉ dùng với những field có `type=number`
+     * Trả về theo dạng __`[expression, extUpdateFilter]`__
+     * @param {string} field Tên của field cần tăng `value`.
+     * @returns
+     */
+    getExprNExtUpdateFilter: (field) => [{ $inc: { [field]: -1 } }, { [field]: { $gt: 0 } }]
   }
 }

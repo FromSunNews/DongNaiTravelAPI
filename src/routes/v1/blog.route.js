@@ -5,7 +5,10 @@ import { AuthMiddleware } from 'middlewares/auth.middleware'
 const router = express.Router()
 
 router.route('/create_new')
-  .post(BlogController.createBlog)
+  .post(AuthMiddleware.isAuthorized, BlogController.createBlog)
+
+router.route('/update_one')
+  .post(AuthMiddleware.isAuthorized, BlogController.updateOneBlogByCase)
 
 router.route('/get_one')
   .get(BlogController.getBlog)

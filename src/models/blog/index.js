@@ -2,17 +2,19 @@ import { ObjectId } from 'mongodb'
 import { getDB } from 'config/mongodb'
 
 import {
-  createLookupStage,
-  createObjectIDByString,
   createProjectionStage,
   getExpectedFieldsProjection,
-  getPipelineStageWithSpecialtyFields,
+  getPipelineStagesWithSpecialtyFields,
   getFindStageWithFilters
 } from 'utilities/mongo'
+import {
+  removePropsFromObj
+} from 'utilities/function'
 
 import {
   BlogFindStages,
-  SpecialtyBlogFields
+  getSpecialtyBlogFields,
+  BlogUpdateCases
 } from './expressions'
 
 import {
@@ -67,8 +69,8 @@ async function findOneBlog(data) {
       }
     ]
     let blogProjectionStage
-
-    let [specialtyFieldsPipeline, newFields] = getPipelineStageWithSpecialtyFields(SpecialtyBlogFields, fields, user)
+    let specialtyBlogFields = getSpecialtyBlogFields()
+    let [specialtyFieldsPipeline, newFields] = getPipelineStagesWithSpecialtyFields(specialtyBlogFields, fields, user)
 
     blogProjectionStage = createProjectionStage(getExpectedFieldsProjection(newFields))
 
@@ -92,7 +94,6 @@ async function findManyBlog(data) {
     let { filter, fields, limit = 10, skip = 0, user } = data
     let filters = filter?.split(',')
     let pipeline = []
-    let addFieldsStage = []
     let projectStage = []
     let findStage = {
       match: {
@@ -100,13 +101,11 @@ async function findManyBlog(data) {
       },
       others: []
     }
+    let specialtyBlogFields = getSpecialtyBlogFields()
+    let [specialtyFieldsPipeline, newFields] = getPipelineStagesWithSpecialtyFields(specialtyBlogFields, fields, user)
 
     if (filters)
       findStage = Object.assign({}, findStage, getFindStageWithFilters(BlogFindStages, filters))
-
-    if (!addFieldsStage[0]) addFieldsStage[0] = { '$addFields': {} }
-
-    let [specialtyFieldsPipeline, newFields] = getPipelineStageWithSpecialtyFields(SpecialtyBlogFields, fields, user)
 
     projectStage = createProjectionStage(getExpectedFieldsProjection(newFields))
 
@@ -125,8 +124,26 @@ async function findManyBlog(data) {
   }
 }
 
-async function updateOneBlog() {
+async function updateOneBlogByCase(id, updateData, updateCase = 'default') {
+  try {
+    let newUpdateData
+    if (updateData) typeof updateData === 'string' | 'number' ? updateData : removePropsFromObj(updateData, INVALID_UPDATE_FIELDS)
+    let [expression, extendedUpdateFilter] = BlogUpdateCases[updateCase](newUpdateData)
+    let updateFilter = {
+      _id: new ObjectId(id),
+      ...extendedUpdateFilter
+    }
 
+    let result = await getDB().collection(blogCollectionName).updateOne(
+      updateFilter,
+      expression
+    )
+
+    return result
+  } catch (error) {
+    console.error(error.message)
+    return undefined
+  }
 }
 
 async function deleteOneBlog() {
@@ -137,6 +154,6 @@ export const BlogModel = {
   insertOneBlog,
   findOneBlog,
   findManyBlog,
-  updateOneBlog,
+  updateOneBlogByCase,
   deleteOneBlog
 }

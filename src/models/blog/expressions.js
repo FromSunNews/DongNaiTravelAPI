@@ -10,12 +10,15 @@ import {
 } from 'schemas/blog.schema'
 
 import {
-  SpecialtyFieldStageNames
+  AggregationStageNames,
+  SpecialUpdateCases
 } from 'utilities/mongo'
 
 import {
-  BlogQualityNameProps
+  BlogQualityNameProps,
+  SpecialtyDataFieldProps
 } from 'types'
+import { placeFields } from 'schemas/place.schema'
 
 /**
  * Tên của các blog qualities
@@ -60,75 +63,92 @@ export const BlogFindStages = {
   }
 }
 
-export const SpecialtyBlogFields = {
-  content: {
-    field: 'content',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$content', 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'content',
-          let: { pid: '$contentId' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', { $toObjectId: '$$pid' }]
+export function getSpecialtyBlogFields() {
+  return {
+    content: {
+      field: 'content',
+      stages: {
+        [AggregationStageNames.addFields]: { $addFields: { content: { '$arrayElemAt': ['$content', 0] } } },
+        [AggregationStageNames.lookup]: {
+          $lookup: {
+            from: 'content',
+            let: { pid: '$contentId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$_id', { $toObjectId: '$$pid' }]
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: false,
+                  plainTextMarkFormat: true,
+                  speech: true
                 }
               }
-            },
-            {
-              $project: {
-                _id: false,
-                plainTextMarkFormat: true,
-                speech: true
-              }
-            }
-          ],
-          as: 'content'
+            ],
+            as: 'content'
+          }
         }
       }
-    }
-  },
-  author: {
-    field: 'author',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: { '$arrayElemAt': ['$author', 0] } },
-      [SpecialtyFieldStageNames.lookup]: {
-        $lookup: {
-          from: 'users',
-          let: { pid: '$authorId' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', { $toObjectId: '$$pid' }]
+    },
+    author: {
+      field: 'author',
+      stages: {
+        [AggregationStageNames.addFields]: { $addFields: { author: { '$arrayElemAt': ['$author', 0] } } },
+        [AggregationStageNames.lookup]: {
+          $lookup: {
+            from: 'users',
+            let: { pid: '$authorId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$_id', { $toObjectId: '$$pid' }]
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: false,
+                  displayName: true,
+                  firstName: true,
+                  lastName: true,
+                  avatar: true
                 }
               }
-            },
-            {
-              $project: {
-                _id: false,
-                displayName: true,
-                firstName: true,
-                lastName: true,
-                avatar: true
-              }
-            }
-          ],
-          as: 'author'
+            ],
+            as: 'author'
+          }
         }
       }
-    }
-  },
-  isLiked: {
-    field: 'isLiked',
-    stages: {}
-  },
-  _dataType: {
-    field: 'isLiked',
-    stages: {
-      [SpecialtyFieldStageNames.addFields]: { $addFields: 'blog' }
+    },
+    isLiked: {
+      field: 'isLiked',
+      functionalStages: {
+        [AggregationStageNames.addFields]: user => ({ $addFields: { isLiked: { $in: [{ $toString: '$_id' }, user.savedBlogs] } } })
+      }
+    },
+    _dataType: {
+      field: '_dataType',
+      stages: {
+        [AggregationStageNames.addFields]: { $addFields: { _dataType: 'blog' } }
+      }
     }
   }
+}
+
+/**
+ * Đây là một số case update đặc biệt cho blog.
+ */
+export const BlogUpdateCases = {
+  'default': data => SpecialUpdateCases.default.getExprNExtUpdateFilter(data),
+  'addEle:reviewIds': reviewId => SpecialUpdateCases.addEle.getExprNExtUpdateFilter(blogFields.reviewIds, reviewId),
+  'removeEle:reviewIds': reviewId => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter(blogFields.reviewIds, reviewId),
+  'inc:userFavoritesTotal': () => SpecialUpdateCases.inc.getExprNExtUpdateFilter(blogFields.userFavoritesTotal),
+  'dec:userFavoritesTotal': () => SpecialUpdateCases.dec.getExprNExtUpdateFilter(blogFields.userFavoritesTotal),
+  'inc:userCommentsTotal': () => SpecialUpdateCases.inc.getExprNExtUpdateFilter(blogFields.userCommentsTotal),
+  'dec:userCommentsTotal': () => SpecialUpdateCases.dec.getExprNExtUpdateFilter(blogFields.userCommentsTotal)
 }

@@ -45,8 +45,20 @@ async function getBlogs(req, res) {
   }
 }
 
+async function updateOneBlogByCase(req, res) {
+  try {
+    let result = await BlogService.updateOneBlogByCase(req.body)
+    return res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    return res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
 export const BlogController = {
   createBlog,
   getBlog,
-  getBlogs
+  getBlogs,
+  updateOneBlogByCase
 }
