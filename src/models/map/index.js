@@ -11,8 +11,12 @@ import {
   getExpectedFieldsProjection,
   AggregationStageNames,
   getFindStageWithFilters,
-  getPipelineStagesWithSpecialtyFields
+  getPipelineStagesWithSpecialtyFields,
+  isValidObjectId
 } from 'utilities/mongo'
+import {
+  removePropsFromObj
+} from 'utilities/function'
 
 import {
   PlaceFindStages,
@@ -27,7 +31,7 @@ const mapCollectionName = 'maps'
 
 
 // Phuong: Đây là những trường không được update (giá trị cố định không đổi)
-const INVALID_UPDATE_FILEDS = ['_id', 'place_id', 'createdAt']
+const INVALID_UPDATE_FIELDS = ['_id', 'place_id', 'createdAt']
 
 // Phuong: Tạo Schema để mongodb biết tạo bảng ntn
 const validateSchema = async (data) => {
@@ -107,7 +111,6 @@ const findManyInLimitWithPipeline = (function() {
       // Đầu tiên thì split cái filter ra bằng khoảng trắng;
       let filters = filter?.split(',')
       let pipeline = []
-      let addFieldsStage = []
       let projectStage = []
       // T gọi cái này là find stage là bời vì nó sẽ tìm record theo $match
       let findStage = {
@@ -210,7 +213,7 @@ const updateByPlaceId = async (place_id, data) => {
 
     // Phuong: CHỗ này là xóa những trường mà mình không cho phép update
     Object.keys(updateData).forEach(fieldName => {
-      if (INVALID_UPDATE_FILEDS.includes(fieldName)) {
+      if (INVALID_UPDATE_FIELDS.includes(fieldName)) {
         delete updateData[fieldName]
       }
     })
@@ -229,16 +232,17 @@ const updateByPlaceId = async (place_id, data) => {
 
 const updateOneByCase = async (id, updateData, updateCase = 'default') => {
   try {
-    const expression = PlaceUpdateCases[updateCase](updateData)
+    let newUpdateData
+    if (updateData) typeof updateData === 'string' | 'number' ? updateData : removePropsFromObj(updateData, INVALID_UPDATE_FIELDS)
+    let [expression, extendedUpdateFilter] = PlaceUpdateCases[updateCase](newUpdateData)
+    let idFilter = isValidObjectId(id) ? { _id: new ObjectId(id) } : { place_id: id }
+    let updateFilter = {
+      ...idFilter,
+      ...extendedUpdateFilter
+    }
 
-    Object.keys(updateData).forEach(fieldName => {
-      if (INVALID_UPDATE_FILEDS.includes(fieldName)) {
-        delete updateData[fieldName]
-      }
-    })
-
-    const result = await getDB().collection(mapCollectionName).updateOne(
-      { $or: [ { _id: new ObjectId(id) }, { place_id: id } ] },
+    let result = await getDB().collection(mapCollectionName).updateOne(
+      updateFilter,
       expression
     )
 

@@ -13,7 +13,7 @@ export const placeFields = {
   reviews_id: 'reviews_id',
   content_id: 'content_id',
   isRecommended: 'isRecommended',
-  numberOfVisited: 'numberOfVisited',
+  user_favorites_total: 'user_favorites_total',
   reference: 'reference',
   plus_code: 'plus_code',
   business_status: 'business_status',
@@ -69,7 +69,7 @@ export const placeCollectionSchema = Joi.object({
   content_id: Joi.string().default(null),
 
   isRecommended: Joi.boolean().default(false),
-  numberOfVisited: Joi.number().default(0),
+  user_favorites_total: Joi.number().default(0),
 
   reference: Joi.string().default(null),
 

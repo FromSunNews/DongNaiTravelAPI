@@ -276,10 +276,7 @@ const updateOneByCase = async(id, data) => {
 
       if (UserUpdateCases['addEle:savedBlogs' === updateCase && updateCase]) {
         // Nếu như updateCase === addEle:savedPlaces thì có nghĩa updateData chính là blogId hay _id của blog (string)
-        console.log('Blog id: ', updateData)
-        console.log('Update blog Case: ', updateCase)
-        let result = await BlogModel.updateOneBlogByCase(updateData, undefined, 'inc:userFavoritesTotal')
-        console.log('Update blog result: ', result)
+        await BlogModel.updateOneBlogByCase(updateData, undefined, 'inc:userFavoritesTotal')
       }
 
       if (UserUpdateCases['removeEle:savedBlogs' === updateCase && updateCase]) {

@@ -237,3 +237,17 @@ export const SpecialUpdateCases = {
     getExprNExtUpdateFilter: (field) => [{ $inc: { [field]: -1 } }, { [field]: { $gt: 0 } }]
   }
 }
+
+/**
+ * Hàm này dùng để check xem `id` (string) có phải là một chuỗi ObjectId
+ * hợp lệ hay không?
+ */
+export const isValidObjectId = (function() {
+  let reg = /^[0-9a-fA-F]{24}$/
+  /**
+   * @param {string} id
+   */
+  return function(id) {
+    return reg.test(id)
+  }
+})()

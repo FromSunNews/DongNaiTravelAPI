@@ -65,7 +65,7 @@
  * @property {"reviews_id"} reviews_id
  * @property {"content_id"} content_id
  * @property {"isRecommended"} isRecommended
- * @property {"numberOfVisited"} numberOfVisited
+ * @property {"user_favorites_total"} user_favorites_total
  * @property {"reference"} reference
  * @property {"plus_code"} plus_code
  * @property {"business_status"} business_status

@@ -13,8 +13,6 @@ export const UserUpdateCases = {
   'removeEle:savedPlaces': (placeId) => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter('savedPlaces', placeId),
   'addEle:follower': (userId) => SpecialUpdateCases.addEle.getExprNExtUpdateFilter('followerIds', userId),
   'removeEle:follower': (userId) => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter('followerIds', userId),
-  'addEle:visitedPlaces': (placeId) => SpecialUpdateCases.addEle.getExprNExtUpdateFilter('visitedPlaces', placeId),
-  'removeEle:visitedPlaces': (placeId) => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter('visitedPlaces', placeId),
   'addEle:savedBlogs': (blogId) => SpecialUpdateCases.addEle.getExprNExtUpdateFilter('savedBlogs', blogId),
   'removeEle:savedBlogs': (blogId) => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter('savedBlogs', blogId)
 }

@@ -1,5 +1,6 @@
 import {
-  AggregationStageNames
+  AggregationStageNames,
+  SpecialUpdateCases
 } from 'utilities/mongo'
 
 import {
@@ -24,10 +25,10 @@ export const PlaceFilterKeywords = {
  */
 export const PlaceFindStageByQuality = {
   'all': {},
-  'recommended': { 'isRecommended': true },
-  'popular': { 'numberOfVisited': -1, 'user_ratings_total': -1 },
-  'most_visit': { 'numberOfVisited': -1 },
-  'high_rating': { 'rating': -1 }
+  'recommended': { [placeFields.isRecommended]: true },
+  'popular': { [placeFields.user_favorites_total]: -1, [placeFields.user_ratings_total]: -1 },
+  'most_favorite': { [placeFields.user_favorites_total]: -1 },
+  'high_rating': { [placeFields.rating]: -1 }
 }
 
 export function getSpecialtyPlaceFields() {
@@ -106,13 +107,7 @@ export function getSpecialtyPlaceFields() {
     isLiked: {
       field: 'isLiked',
       functionalStages: {
-        [AggregationStageNames.addFields]: user => ({ $addFields: { isLiked: { $in: ['$place_id', user.savedBlogs] } } })
-      }
-    },
-    isVisited: {
-      field: 'isVisited',
-      functionalStages: {
-        [AggregationStageNames.addFields]: user => ({ $addFields: { isVisited: { $in: ['$place_id', user.visitedPlaces] } } })
+        [AggregationStageNames.addFields]: user => ({ $addFields: { isLiked: { $in: ['$place_id', user.savedPlaces] } } })
       }
     },
     _dataType: {
@@ -139,7 +134,7 @@ export const PlaceFindStages = {
       'all': (filter = PlaceFindStageByQuality.all) => ({ '$match': filter }),
       'recommended': (filter = PlaceFindStageByQuality.recommended) => ({ '$match': filter }),
       'popular': (filter = PlaceFindStageByQuality.popular) => ({ '$sort': filter }),
-      'most_visit': (filter = PlaceFindStageByQuality.most_visit) => ({ '$sort': filter }),
+      'most_favorite': (filter = PlaceFindStageByQuality.most_favorite) => ({ '$sort': filter }),
       'high_rating': (filter = PlaceFindStageByQuality.high_rating) => ({ '$sort': filter })
     }
   },
@@ -161,11 +156,11 @@ export const PlaceFindStages = {
 }
 
 export const PlaceUpdateCases = {
-  'default': (data) => ({ $set: data }),
-  'inc:userRatingsTotal': () => ({ $inc: { [placeFields.user_ratings_total]: 1 } }),
-  'dec:userRatingsTotal': () => ({ $inc: { [placeFields.user_ratings_total]: -1 } }),
-  'inc:userFavoritesTotal': '',
-  'dec:userFavoritesTotal': '',
-  'addEle:types': (type) => ({ $addToSet: { [placeFields.types]: type } }),
-  'removeEle:types': (type) => ({ $pull: { [placeFields.types]: type } })
+  'default': (data) => SpecialUpdateCases.default.getExprNExtUpdateFilter(data),
+  'inc:userRatingsTotal': () => SpecialUpdateCases.inc.getExprNExtUpdateFilter(placeFields.user_ratings_total),
+  'dec:userRatingsTotal': () => SpecialUpdateCases.dec.getExprNExtUpdateFilter(placeFields.user_ratings_total),
+  'inc:userFavoritesTotal': () => SpecialUpdateCases.inc.getExprNExtUpdateFilter(placeFields.user_favorites_total),
+  'dec:userFavoritesTotal': () => SpecialUpdateCases.dec.getExprNExtUpdateFilter(placeFields.user_favorites_total),
+  'addEle:types': (type) => SpecialUpdateCases.addEle.getExprNExtUpdateFilter(placeFields.types, type),
+  'removeEle:types': (type) => SpecialUpdateCases.removeEle.getExprNExtUpdateFilter(placeFields.types, type)
 }
