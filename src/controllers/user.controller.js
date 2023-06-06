@@ -107,10 +107,10 @@ const resetPassword = async (req, res) => {
   }
 }
 
-const updateByCase = async(req, res) => {
+const updateOneByCase = async(req, res) => {
   try {
     let userId = req.jwtDecoded._id
-    const result = await UserService.updateByCase(userId, req.body)
+    const result = await UserService.updateOneByCase(userId, req.body)
 
     return res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
@@ -184,5 +184,5 @@ export const UserController = {
   getMap,
   updateMap,
   getInfoUser,
-  updateByCase
+  updateOneByCase
 }

@@ -107,3 +107,12 @@ export function replaceBase64PhotoWithLink(md, links) {
   })
   return completeContent
 }
+
+/**
+ * Hàm này dùng để đếm số chữ trong một văn bản, hoặc một câu.
+ * @param {string} text một văn bản, đoạn văn hoặc một câu.
+ */
+export function countWord(text) {
+  if (!text) return 0
+  return text.split(/[\s|\n]/).filter(word => Boolean(word)).length
+}

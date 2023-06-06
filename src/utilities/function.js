@@ -59,3 +59,20 @@ export const sortByRatingHighToLow = (arrPlaceTextSearch) => {
 
   return arrPlaceTextSearch
 }
+
+/**
+ * Hàm này dùng dể remove một prop nào đó ra khỏi `obj`, mà các tên của prop đó được
+ * khai báo trong `propName`. Hàm này chỉ giúp xoá các prop ở level = 1 (depth = 1)
+ * @param {[key: any]: any} obj Object cần được xoá.
+ * @param {Array<string>} propName Một mảng các propName cần được xoá trong `obj`
+ */
+export const removePropsFromObj = (obj, propName) => {
+  let clone = cloneDeep(obj)
+
+  Object.keys(clone).forEach(fieldName => {
+    if (propName.includes(fieldName)) {
+      delete clone[fieldName]
+    }
+  })
+  return clone
+}

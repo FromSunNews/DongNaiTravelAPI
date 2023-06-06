@@ -1,13 +1,19 @@
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
 import { getDB } from 'config/mongodb'
-import { NotifModel } from './notif.model'
+import { NotifModel } from 'models/notif.model'
+
+import {
+  removePropsFromObj
+} from 'utilities/function'
 
 import {
   UserUpdateCases
-} from 'utilities/mongo'
+} from './expressions'
 
-import { userCollectionSchema } from 'schemas/user.schema'
+import {
+  userCollectionSchema
+} from 'schemas/user.schema'
 
 // Define User collection
 const userCollectionName = 'users'
@@ -67,20 +73,18 @@ const createNew = async (data) => {
 // Tuan: Cập nhật user bằng các trường hợp
 const updateOneByCase = async(id, data, updateCase = 'default') => {
   try {
-    const updateData = typeof data === 'string' | 'number' ? data : Array.isArray(data) ? [...data] : { ...data }
-
-    Object.keys(updateData).forEach(fieldName => {
-      if (INVALID_UPDATE_FILEDS.includes(fieldName)) {
-        delete updateData[fieldName]
-      }
-    })
-
-    let updateExpression = UserUpdateCases[updateCase](updateData)
+    let newUpdateData
+    if (data) newUpdateData = typeof data === 'string' | 'number' ? data : removePropsFromObj(data, INVALID_UPDATE_FILEDS)
+    let [expression, extendedUpdateFilter] = UserUpdateCases[updateCase](newUpdateData)
+    let updateFilter = {
+      _id: new ObjectId(id),
+      ...extendedUpdateFilter
+    }
 
     const result = await getDB().collection(userCollectionName).updateOne(
       // Phuong: Phải chuyển _id ở client thành ObjectId
-      { _id: new ObjectId(id) },
-      updateExpression
+      updateFilter,
+      expression
     )
 
     return result

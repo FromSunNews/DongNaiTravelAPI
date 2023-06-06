@@ -33,7 +33,7 @@ router.route('/update')
   .post(UserValidation.update, UserController.update)
 
 router.route('/update_by_case')
-  .post(AuthMiddleware.isAuthorized, UserController.updateByCase)
+  .post(AuthMiddleware.isAuthorized, UserController.updateOneByCase)
 
 router.route('/reset_password')
   .put(UserValidation.resetPassword, UserController.resetPassword)

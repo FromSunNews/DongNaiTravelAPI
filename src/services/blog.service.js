@@ -9,7 +9,8 @@ import { UserModel } from 'models/user.model'
 import {
   getBase64PhotoInMD,
   replaceBase64PhotoWithLink,
-  removeMDFromString
+  removeMDFromString,
+  countWord
 } from 'utilities/string'
 
 import {
@@ -75,6 +76,7 @@ async function createBlog(data) {
 
     blog.contentId = insertedContent.insertedId.toString()
     blog.avatar = blogAvatarLink.url
+    blog.readTime = Math.floor(countWord(plainText) / 200 * 60)
 
     const insertResult = await BlogModel.insertOneBlog(blog)
     return insertResult
@@ -124,8 +126,20 @@ async function getBlogs(query) {
   }
 }
 
+async function updateOneBlogByCase(data) {
+  try {
+    let { blogId, updateData, updateCase } = data
+    let result = await BlogModel.updateOneBlogByCase(blogId, updateData, updateCase)
+    return result
+  } catch (error) {
+    console.error(error.message)
+    return undefined
+  }
+}
+
 export const BlogService = {
   createBlog,
   getBlog,
-  getBlogs
+  getBlogs,
+  updateOneBlogByCase
 }

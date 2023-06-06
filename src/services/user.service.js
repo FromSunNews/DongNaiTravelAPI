@@ -1,17 +1,26 @@
-import { UserModel } from 'models/user.model'
+import axios from 'axios'
 import bcryptjs from 'bcryptjs'
 import otpGenerator from 'otp-generator'
+import { cloneDeep } from 'lodash'
+
+import { UserModel } from 'models/user'
+import { MapModel } from 'models/map'
+import { BlogModel } from 'models/blog'
+import { NotifModel } from 'models/notif.model'
+
+import { UserUpdateCases } from 'models/user/expressions'
+import { PlaceUpdateCases } from 'models/map/expressions'
+import { BlogUpdateCases } from 'models/blog/expressions'
+
 import { SendInBlueProvider } from 'providers/SendInBlueProvider'
 import { RedisQueueProvider } from 'providers/RedisQueueProvider'
+import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+import { JwtProvider } from 'providers/JwtProvider'
+import { SendMessageToSlack } from 'providers/SendMessageToSlack'
 
 import { pickUser } from 'utilities/transform'
-import { JwtProvider } from 'providers/JwtProvider'
-import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+
 import { env } from 'config/environtment'
-import { SendMessageToSlack } from 'providers/SendMessageToSlack'
-import { NotifModel } from 'models/notif.model'
-import axios from 'axios'
-import { cloneDeep } from 'lodash'
 
 const createNew = async (data) => {
   try {
@@ -242,15 +251,38 @@ const resetPassword = async (data) => {
   }
 }
 
-const updateByCase = async(id, data) => {
+const updateOneByCase = async(id, data) => {
   try {
     let userId = id
     let updateCase = data.updateCase
     let updateData = data.updateData
-
-    let result = await UserModel.updateOneAndGetByCase(userId, updateData, updateCase)
+    console.log('Update data: ', updateData)
+    console.log('Update Case: ', updateCase)
+    let result = await UserModel.updateOneByCase(userId, updateData, updateCase)
 
     if (!result) throw new Error('Cannot update user')
+
+    console.log('User update result: ', result)
+
+    if (result.modifiedCount === 1 && result.matchedCount === 1) {
+      if (UserUpdateCases['addEle:savedPlaces' === updateCase && updateCase]) {
+        // Nếu như updateCase === addEle:savedPlaces thì có nghĩa updateData chính là placeId (string)
+        await MapModel.updateOneByCase(updateData, undefined, 'inc:userFavoritesTotal')
+      }
+
+      if (UserUpdateCases['removeEle:savedPlaces' === updateCase && updateCase]) {
+        await MapModel.updateOneByCase(updateData, undefined, 'dec:userFavoritesTotal')
+      }
+
+      if (UserUpdateCases['addEle:savedBlogs' === updateCase && updateCase]) {
+        // Nếu như updateCase === addEle:savedPlaces thì có nghĩa updateData chính là blogId hay _id của blog (string)
+        await BlogModel.updateOneBlogByCase(updateData, undefined, 'inc:userFavoritesTotal')
+      }
+
+      if (UserUpdateCases['removeEle:savedBlogs' === updateCase && updateCase]) {
+        await BlogModel.updateOneBlogByCase(updateData, undefined, 'dec:userFavoritesTotal')
+      }
+    }
 
     return result
   } catch (error) {
@@ -431,7 +463,7 @@ export const UserService = {
   createNew,
   signIn,
   refreshToken,
-  updateByCase,
+  updateOneByCase,
   update,
   sendOtp,
   verifyOtp,
