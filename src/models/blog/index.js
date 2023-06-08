@@ -61,11 +61,14 @@ async function insertOneBlog(data) {
  */
 async function findOneBlog(data) {
   try {
-    let { blogId, fields, user } = data
+    let { author, blogId, fields, user } = data
     console.log('Blog id: ', blogId)
     let pipeline = [
       {
-        '$match': { '_id': new ObjectId(blogId) }
+        '$match': {
+          ...blogId ? { '_id': new ObjectId(blogId) } : {},
+          ...author ? { authorId: { $eq: author } } : {}
+        }
       }
     ]
     let blogProjectionStage
@@ -91,21 +94,23 @@ async function findOneBlog(data) {
 
 async function findManyBlog(data) {
   try {
-    let { filter, fields, limit = 10, skip = 0, user } = data
-    let filters = filter?.split(',')
+    let { quality, fields, limit = 10, skip = 0, user, author } = data
+    let qualitys = quality?.split(',')
     let pipeline = []
     let projectStage = []
     let findStage = {
       match: {
-        $match: {}
+        $match: {
+          ...author ? { authorId: { $eq: author } } : {}
+        }
       },
       others: []
     }
     let specialtyBlogFields = getSpecialtyBlogFields()
     let [specialtyFieldsPipeline, newFields] = getPipelineStagesWithSpecialtyFields(specialtyBlogFields, fields, user)
 
-    if (filters)
-      findStage = Object.assign({}, findStage, getFindStageWithFilters(BlogFindStages, filters))
+    if (qualitys)
+      findStage = Object.assign({}, findStage, getFindStageWithFilters(BlogFindStages, qualitys))
 
     projectStage = createProjectionStage(getExpectedFieldsProjection(newFields))
 

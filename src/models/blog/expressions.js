@@ -56,6 +56,11 @@ export const BlogFindStages = {
       'name': (value = '') => ({ '$match': { 'name': { $regex: value, $options: 'i' } } })
     }
   },
+  type: {
+    expressions: {
+      'type': (value = '') => ({ '$match': { 'types': { '$eq': value } } })
+    }
+  },
   except_by_blogid: {
     expressions: {
       'except_by_blogid': id => id ? ({ '$match': { _id: { '$not': { '$eq': new ObjectId(id) } } } }) : ({ '$match': {} })

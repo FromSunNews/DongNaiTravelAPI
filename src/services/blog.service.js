@@ -89,6 +89,7 @@ async function createBlog(data) {
 async function getBlog(query) {
   try {
     let data = {
+      author: query.author,
       blogId: query.blogId,
       fields: query.fields || ''
     }
@@ -105,16 +106,17 @@ async function getBlog(query) {
 
 async function getBlogs(query) {
   try {
-    let { limit, skip, fields, filter } = query
+    let { limit = 5, skip = 0, fields, quality, author } = query
     console.log('Query: ', query)
     let user
     if (query.userId) user = await UserModel.findOneById(query.userId)
     let data = {
-      filter,
+      quality,
       fields,
       limit: parseInt(limit),
       skip: parseInt(skip),
-      user
+      user,
+      author
     }
     console.log(`Limit: ${data.limit}; Skip: ${data.skip}`)
     console.log(`Type of limit and skip: ${typeof data.limit} and ${typeof data.skip}`)
