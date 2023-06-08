@@ -52,12 +52,12 @@ async function createBlog(data) {
     let completeContent = content
     let plainText
     let base64PhotoBuffers = base64Photos.map(base64Photo => Buffer.from(base64Photo))
-    let [blogAvatarLink, ...photoLinks] = await CloudinaryProvider.streamUploadMutiple(base64PhotoBuffers, cloudinaryFolderName)
+    // let [blogAvatarLink, ...photoLinks] = await CloudinaryProvider.streamUploadMutiple(base64PhotoBuffers, cloudinaryFolderName)
 
-    if (photoLinks.length > 1) {
-      let links = photoLinks.map(photoLink => photoLink.url)
-      completeContent = replaceBase64PhotoWithLink(content, links)
-    }
+    // if (photoLinks.length > 1) {
+    //   let links = photoLinks.map(photoLink => photoLink.url)
+    //   completeContent = replaceBase64PhotoWithLink(content, links)
+    // }
 
     plainText = removeMDFromString(completeContent)
 
@@ -72,14 +72,14 @@ async function createBlog(data) {
         vi: completeContent
       }
     }
-    let insertedContent = await ContentModel.createNew(contentDoc)
+    // let insertedContent = await ContentModel.createNew(contentDoc)
 
-    blog.contentId = insertedContent.insertedId.toString()
-    blog.avatar = blogAvatarLink.url
-    blog.readTime = Math.floor(countWord(plainText) / 200 * 60)
+    // blog.contentId = insertedContent.insertedId.toString()
+    // blog.avatar = blogAvatarLink.url
+    // blog.readTime = Math.floor(countWord(plainText) / 200 * 60)
 
-    const insertResult = await BlogModel.insertOneBlog(blog)
-    return insertResult
+    // const insertResult = await BlogModel.insertOneBlog(blog)
+    return true
   } catch (error) {
     console.error(error.message)
     return undefined
