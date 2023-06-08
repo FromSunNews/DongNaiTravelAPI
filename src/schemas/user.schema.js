@@ -45,6 +45,7 @@ export const userCollectionSchema = Joi.object({
   },
   savedSuggestions: Joi.array().items(Joi.string()).default([]),
   savedPlaces: Joi.array().items(Joi.string()).default([]),
+  savedBlogs: Joi.array().items(Joi.string()).default([]),
   followerIds: Joi.array().items(Joi.string()).default([]),
   followingIds: Joi.array().items(Joi.string()).default([]),
   notifIds: Joi.array().items(Joi.string()).default([]),
