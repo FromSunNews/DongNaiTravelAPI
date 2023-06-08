@@ -276,6 +276,7 @@ export const MapModel = {
   findOneByPlaceId,
   findManyInLimit,
   findManyInLimitWithPipeline,
-  createManyPlaces
+  createManyPlaces,
+  findOneByPlaceIdStartEnd
 }
 
