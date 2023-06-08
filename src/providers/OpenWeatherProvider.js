@@ -1,6 +1,7 @@
 
 import { env } from 'config/environtment'
 import axios from 'axios'
+import { GeocodingGoogleMapProvider } from './GeocodingGoogleMapProvider'
 
 // https://openweathermap.org/current#data
 const getWeatherCurrent = async (coor) => {
@@ -110,7 +111,15 @@ const getGeocodingDirect = async (address) => {
       }
     }
   } catch (error) {
-    throw new Error(`Error in getMessage: ${error.message}`)
+    // Lỗi thì qua geocoding của googlemap
+    const response = GeocodingGoogleMapProvider.getPlaceIdFromAddress(address)
+    return {
+      name: response.formatted_address,
+      coor: {
+        longitude: response.geometry.location.lng,
+        latitude: response.geometry.location.lat
+      }
+    }
   }
 }
 export const OpenWeatherProvider = {

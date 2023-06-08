@@ -56,7 +56,8 @@ const getRouteDirection = async (data) => {
       oriToCheck = data.oriPlaceId
     } else if (data.typeOri === 'address') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      oriToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      const geocodingOri = GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      oriToCheck = geocodingOri.place_id
     } else if (data.typeOri === 'coordinate') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
       oriToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.oriCoor.latitude, data.oriCoor.longitude)
@@ -66,7 +67,8 @@ const getRouteDirection = async (data) => {
       desToCheck = data.desPlaceId
     } else if (data.typeDes === 'address') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      desToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.desAddress)
+      const geocodingDes = GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      desToCheck = geocodingDes.place_id
     } else if (data.typeDes === 'coordinate') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
       desToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.desCoor.latitude, data.desCoor.longitude)
