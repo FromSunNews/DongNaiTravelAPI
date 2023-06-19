@@ -266,6 +266,29 @@ const createManyPlaces = async (places) => {
   }
 }
 
+// Phương: Lấy tất cả các dữ liệu của places thông qua mảng place_id
+/**
+ * Method này dùng để trả về một mảng dữ liệu của places. Có arrayPlaceId và có thể yêu cầu các trường dữ liệu cần trả về.
+ * @param {{[key: string]: string}} arrayPlaceId Array chứa các place_id của các địa điểm muốn tìm
+ * @param {{[key: string]: string}} fields Object chứa các field-true để lấy các trường dữ liệu mong muốn.
+ * @returns
+ */
+const findManyByPlaceIds = async (arrayPlaceId, fields) => {
+  console.log('🚀 ~ file: index.js:277 ~ findManyByPlaceIds ~ fields:', fields)
+  console.log('🚀 ~ file: index.js:277 ~ findManyByPlaceIds ~ arrayPlaceId:', arrayPlaceId)
+  try {
+
+    const result = await getDB().collection(mapCollectionName).find(
+      { place_id: { $in: arrayPlaceId } },
+      { projection: fields }
+    ).toArray()
+
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const MapModel = {
   mapCollectionName,
   createNew,
@@ -277,6 +300,7 @@ export const MapModel = {
   findManyInLimit,
   findManyInLimitWithPipeline,
   createManyPlaces,
-  findOneByPlaceIdStartEnd
+  findOneByPlaceIdStartEnd,
+  findManyByPlaceIds
 }
 

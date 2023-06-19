@@ -100,6 +100,18 @@ const getGeocodingReverse = async (req, res) => {
     })
   }
 }
+
+const getPlacesById = async (req, res) => {
+  try {
+    const result = await MapService.getPlacesById(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
 // const createNew = async (req, res) => {
 //   try {
 //     const result = await MapService.createNew(req.body)
@@ -133,7 +145,8 @@ export const MapController = {
   getPlaceDetails,
   getWeatherCurrent,
   getWeatherForecast,
-  getGeocodingReverse
+  getGeocodingReverse,
+  getPlacesById
   // createNew,
   // update,
 }
