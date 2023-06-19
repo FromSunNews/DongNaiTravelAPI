@@ -1,16 +1,20 @@
 import express from 'express'
 import { connectDB } from 'config/mongodb'
-import { env } from 'config/environtment'
-import { apiV1 } from 'routes/v1'
-import cors from 'cors'
-import socketIo from 'socket.io'
-import http from 'http'
-import { trackingUserLocationCurrent } from 'sockets/directionSocket'
-import { createTravelItinerary } from 'sockets/itinerarySocket'
-import { getNotifToUser } from 'sockets/notifSocket'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
+import http from 'http'
+import socketIo from 'socket.io'
+
+import { apiV1 } from 'routes/v1'
 import { apiV2 } from 'routes/v2'
+
+import { env } from 'config/environtment'
 import { corsOptions } from 'config/cors'
+
+import { createTravelItinerary } from 'sockets/itinerarySocket'
+import { trackingUserLocationCurrent } from 'sockets/directionSocket'
+import { getNotifToUser } from 'sockets/notifSocket'
+import { listenAllBlogSocketEvents } from 'sockets/blog'
 
 connectDB()
   .then(() => console.log('Connected successfully to database server!'))
@@ -73,7 +77,14 @@ const bootServer = () => {
     // Hàm xử lý nhận thông báo cho user
     getNotifToUser(io, socket, socketIdMap)
 
+    // Listen tới tất cả các sự kiện trong Blog
+    listenAllBlogSocketEvents(io, socket)
+
     socket.on('disconnect', () => {
+      let ids = Object.keys(socketIdMap)
+      for (let id of ids) {
+        if (socketIdMap[id] === socket.id) delete socketIdMap[id]
+      }
       console.log('🚀 ~ file: server.js:59 ~ socket.on ~ socketIdMap:', socketIdMap)
       console.log('Client disconnected: ', socket.id)
     })

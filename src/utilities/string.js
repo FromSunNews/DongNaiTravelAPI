@@ -18,8 +18,8 @@
  */
 
 export const MD_AS_STR = {
-  BOLD: '\\*\\*([^\\*\\s]+[^\\*]+[^\\*\\s]+|[^\\*\\s]+)\\*\\*',
-  ITALIC: '\\*([^\\*\\s]+[^\\*]+[^\\*\\s]+|[^\\*\\s]+)\\*',
+  BOLD: '(?:(?:\\*\\*)|(?:__))([^\\*_\\s]+[^\\*]+[^\\*\\s]+|[^\\*_\\s]+)(?:(?:\\*\\*)|(?:__))',
+  ITALIC: '(?:(?:\\*)|(?:_))([^\\*_\\s]+[^\\*]+[^\\*\\s]+|[^\\*_\\s]+)(?:(?:\\*)|(?:_))',
   UNDERLINE: '~([^~\\s]+[^~]+[^~\\s]+|[^~\\s]+)~',
   LINETHROUGH: '~~([^~\\s]+[^~]+[^~\\s]+|[^~\\s]+)~~',
   HIGHLIGHT: '==([^=\\s]+[^=]+[^=\\s]+|[^=\\s]+)==',
@@ -65,17 +65,29 @@ const MD = (function() {
 export function removeMDFromString(md) {
   if (!md) return ''
   let keys = Object.keys(MD)
+
+  while (MD['IMAGE'].DEFAULT.test(md)) {
+    if (MD['IMAGE'].DEFAULT.test(md)) md = md.replace(MD['IMAGE'].DEFAULT, '')
+  }
+
+  while (MD['LINK'].DEFAULT.test(md)) {
+    if (MD['LINK'].DEFAULT.test(md)) md = md.replace(MD['LINK'].DEFAULT, '')
+  }
+
   for (let key of keys) {
     md = md.replaceAll(MD[key].GM, (match, capture) => {
-      if (key === 'IMAGE' || key === 'LINK') return ''
-      return capture
+      if (key !== 'IMAGE' || key !== 'LINK')
+        return capture
     })
   }
-  return md
+  return md.trim()
 }
 
 /**
- * Hàm này dùng để lấy ra tất cả image trong `md` (Chuỗi markdown).
+ * Hàm này dùng để lấy ra tất cả image trong `md` (Chuỗi markdown). Và trả về một chuỗi mới
+ * VD:
+ * - Input: `Xin chao, day la mot tam anh ![](data:image/png;base64,djhfkj)`.
+ * - Output: `Xin chao, day la mot tam anh ![]()`
  * @param {string} md chuỗi markdown
  * @returns {Array<string>}
  */
@@ -85,9 +97,10 @@ export function getBase64PhotoInMD(md, isFullUrl = false) {
   matches = [...matches]
   matches.forEach(match => {
     let base64 = match[1]
+    md = md.replace(MD['IMAGE'].DEFAULT, '![]()')
     photos.push(base64)
   })
-  return photos
+  return [photos, md]
 }
 
 /**
@@ -99,9 +112,7 @@ export function getBase64PhotoInMD(md, isFullUrl = false) {
 export function replaceBase64PhotoWithLink(md, links) {
   let i = 0
   const completeContent = md.replaceAll(MD.IMAGE.G, (match) => {
-    console.log('Match: ', match.substring(0, 100))
     let newValue = match.replace(MD.IMAGE.DEFAULT, `![](${links[i]})`)
-    console.log('New value: ', newValue)
     i++
     return newValue
   })

@@ -30,10 +30,19 @@ const streamUpload = async (fileBuffer, folderName) => {
   })
 }
 
-const streamUploadMutiple = async (fileBuffers, folderName) => {
+/**
+ * Hàm này dùng để upload nhiều file dạng buffer lên cloudinary.
+ * @param fileBuffers các file buffers
+ * @param {cloudinary.UploadApiOptions} options các tuỳ chọn
+ * @returns
+ */
+const streamUploadMutiple = async (fileBuffers, options) => {
+  options = Object.assign({
+    folder: ''
+  }, options)
   const uploadPromises = fileBuffers.map(fileBuffer => {
     return new Promise((resolve, reject) => {
-      let stream = cloudinaryV2.uploader.upload_stream({ folder: folderName }, (err, result) => {
+      let stream = cloudinaryV2.uploader.upload_stream(options, (err, result) => {
         if (err) {
           reject(err)
         } else {

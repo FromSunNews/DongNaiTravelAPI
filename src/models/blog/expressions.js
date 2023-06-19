@@ -76,7 +76,7 @@ export function getSpecialtyBlogFields() {
         [AggregationStageNames.addFields]: { $addFields: { content: { '$arrayElemAt': ['$content', 0] } } },
         [AggregationStageNames.lookup]: {
           $lookup: {
-            from: 'content',
+            from: 'blog_content',
             let: { pid: '$contentId' },
             pipeline: [
               {

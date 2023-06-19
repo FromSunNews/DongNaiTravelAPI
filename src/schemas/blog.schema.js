@@ -19,6 +19,7 @@ export const blogFields = {
   type: 'type',
   readTime: 'readTime',
   mentionedPlaces: 'mentionedPlaces',
+  speechStatus: 'speechStatus',
   isApproved: 'isApproved',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -35,6 +36,7 @@ export const blogCollectionSchema = Joi.object({
   [blogFields.type]: Joi.string().required(),
   [blogFields.readTime]: Joi.number().required(),
   [blogFields.mentionedPlaces]: Joi.array().items(Joi.string()).default([]),
+  [blogFields.speechStatus]: Joi.string().default('UNAVAILABLE'),
   [blogFields.isApproved]: Joi.boolean().default(false),
   [blogFields.createdAt]: Joi.date().timestamp('javascript').default(Date.now),
   [blogFields.updatedAt]: Joi.date().timestamp().default(null)
