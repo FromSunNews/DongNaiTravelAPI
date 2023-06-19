@@ -4,7 +4,7 @@
 /**
  * @typedef BlogFieldNameProps
  * @property {"authorId"} authorId
- * @property {"reviewIds"} reviewIds
+ * @property {"commentIds"} commentIds
  * @property {"contentId"} contentId
  * @property {"name"} name
  * @property {"avatar"} avatar
