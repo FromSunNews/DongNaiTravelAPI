@@ -86,6 +86,24 @@ async function createBlog(data) {
   }
 }
 
+/**
+ * Về cơ bản thì thằng getBlog với thằng getBlogs là y hệt nhau, nhưng khác ở chỗ là
+ * thằng getBlog sẽ tìm chính xác một blog dựa theo blogId còn thằng getBlogs tìm trừu
+ * tượng nhiều blogs.
+ */
+
+/**
+ * Hàm này dùng để lấy dữ liệu của một blog nào đó. `query` là một object bao gồm có các
+ * thuộc tính như là:
+ * - author: là `_id` của tác giả.
+ * - blogId: là `_id` của blog cần tìm.
+ * - fields: là những trường dữ liệu mong muốn lấy được.
+ * - userId: là `_id` của người dùng đang lấy dữ liệu.
+ *
+ * Sau khi lấy ra được `user` đang lấy dữ liệu từ `userId` (hoặc có thể không) thì mình sẽ tới bước tìm dữ liệu
+ * @param query Một object query.
+ * @returns
+ */
 async function getBlog(query) {
   try {
     let data = {
@@ -104,10 +122,20 @@ async function getBlog(query) {
   }
 }
 
+/**
+ * Hàm này dùng để tìm nhiều blogs theo các tiêu chí như là:
+ * - quality: là một chuỗi bao gồm cặp `key:value` được ngăn cách nhau bởi dấu `,`.
+ * - author: là `_id` của tác giả. Dùng cái này để tìm xem một người dùng đã viết những blog nào?
+ *
+ * Tương tự như `getBlog` thì `getBlogs` cũng sẽ lấy thông tin `user` yêu cầu dữ liệu (hoặc có thể không)
+ * sau đó là tiến hành lấy dữ liệu.
+ * @param query Một object query.
+ * @returns
+ */
 async function getBlogs(query) {
   try {
     let { limit = 5, skip = 0, fields, quality, author } = query
-    console.log('Query: ', query)
+
     let user
     if (query.userId) user = await UserModel.findOneById(query.userId)
     let data = {
@@ -118,8 +146,7 @@ async function getBlogs(query) {
       user,
       author
     }
-    console.log(`Limit: ${data.limit}; Skip: ${data.skip}`)
-    console.log(`Type of limit and skip: ${typeof data.limit} and ${typeof data.skip}`)
+
     let result = await BlogModel.findManyBlog(data)
     return result
   } catch (error) {
@@ -128,9 +155,14 @@ async function getBlogs(query) {
   }
 }
 
+/**
+ * Hàm này dùng để update dữ liệu theo trường hợp, mặc định là `default` :D.
+ * @param data Bao gồm `blogId`, `updateData`, `updateCase`
+ * @returns
+ */
 async function updateOneBlogByCase(data) {
   try {
-    let { blogId, updateData, updateCase } = data
+    let { blogId, updateData, updateCase = 'default' } = data
     let result = await BlogModel.updateOneBlogByCase(blogId, updateData, updateCase)
     return result
   } catch (error) {

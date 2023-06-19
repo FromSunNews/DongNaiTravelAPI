@@ -89,6 +89,21 @@ if (env.BUILD_MODE === 'production') {
   websiteDomain = 'https://dong-nai-travel-admin.vercel.app'
 }
 
+export const CloudinaryFolders = {
+  user: {
+    user: 'users'
+  },
+  place: {
+    place_photos: 'place_photos'
+  },
+  blog: {
+    blog_photos: 'blog_photos'
+  },
+  blog_content: {
+    blog_speechs: 'blog_speechs'
+  }
+}
+
 export const WEBSITE_DOMAIN = websiteDomain
 
 export const DEFAULT_ITEMS_PER_PAGE = 12

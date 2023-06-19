@@ -16,6 +16,7 @@
  * @property {"isApproved"} isApproved
  * @property {"createdAt"} createdAt
  * @property {"updatedAt"} updatedAt
+ * @property {"speechStatus"} speechStatus
  */
 
 /**
@@ -38,6 +39,18 @@
  * @property {number | undefined} readTime Thời gian đọc blog
  * @property {Array<string> | undefined} mentionedPlaces Những nơi được nhắc đến trong blog
  * @property {boolean | undefined} isApproved Blog này được duyệt hay chưa?
+ * @property {number | undefined} updatedAt Thời gian lần cuối mà blog này cập nhật
+ * @property {number | undefined} createdAt Thời gian blog này được tạo
+ */
+
+///
+/// Types for Blog Content.
+///
+/**
+ * @typedef BlogContentDataProps
+ * @property {string} plainText nội dung của blog nhưng không có MF
+ * @property {string} plainTextMarkFormat nội dung của blog nhưng có MF
+ * @property {string} speech đường link dẫn tới giọng đọc của blog
  * @property {number | undefined} updatedAt Thời gian lần cuối mà blog này cập nhật
  * @property {number | undefined} createdAt Thời gian blog này được tạo
  */

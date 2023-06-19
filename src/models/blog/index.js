@@ -92,6 +92,20 @@ async function findOneBlog(data) {
   }
 }
 
+/**
+ * Hàm này dùng để tìm blog theo các tiêu chí sau:
+ * - quality: cho biết tính chất của các blogs đó.
+ * - author: cho biết tác giả của các blogs đó.
+ *
+ * Ngoài ra thì còn có một vài thông số hỗ trợ thêm như là:
+ * - fields: lấy một số field cụ thể, không lấy hết.
+ * - limit: lấy một số blogs nhất định.
+ * - skip: bỏ qua một số blogs nhất định.
+ * - user: là dữ liệu người dùng đang lấy dữ liệu. Để check các thông số thêm khác.
+ *
+ * @param data Dữ liệu để tìm blogs
+ * @returns
+ */
 async function findManyBlog(data) {
   try {
     let { quality, fields, limit = 10, skip = 0, user, author } = data
@@ -129,13 +143,26 @@ async function findManyBlog(data) {
   }
 }
 
-async function updateOneBlogByCase(id, updateData, updateCase = 'default') {
+/**
+ * Khi update dữ liệu, thì có một số tường hợp update đặc biệt. Nếu như chỉ có dùng `$set` thì có nghĩa
+ * là mình chỉ có thể set giá trị mới cho trường giữ liệu đó, tuy nhiên nếu như mình chỉ muốn thêm phần tử
+ * vào trong một field nào đó, hay tăng/giảm giá trị của field nào đó thì sao? Cho nên ở đây sẽ chia theo trường hợp
+ * Có một số trường hợp như sau:
+ * - default: dùng toán tử `$set` để set lại toàn bộ dữ liệu cho blog.
+ * - inc/dec: dùng để tăng hoặc giảm một trường nào đó. Yêu cầu: trường đó phải là số, và tồn tại.
+ * - addEle/removeEle: dùng để thêm/xoá một phần tử của field. Yêu cầu: trường đó phải là một mảng, và tồn tại.
+ * @param {string} blogId là `_id` của blog.
+ * @param updateData Dữ liệu cần update.
+ * @param {string} updateCase Case cần update.
+ * @returns
+ */
+async function updateOneBlogByCase(blogId, updateData, updateCase = 'default') {
   try {
     let newUpdateData
     if (updateData) typeof updateData === 'string' | 'number' ? updateData : removePropsFromObj(updateData, INVALID_UPDATE_FIELDS)
     let [expression, extendedUpdateFilter] = BlogUpdateCases[updateCase](newUpdateData)
     let updateFilter = {
-      _id: new ObjectId(id),
+      _id: new ObjectId(blogId),
       ...extendedUpdateFilter
     }
 
@@ -151,8 +178,18 @@ async function updateOneBlogByCase(id, updateData, updateCase = 'default') {
   }
 }
 
-async function deleteOneBlog() {
-
+/**
+ * Hàm này dùng để xoá vĩnh viễn dữ liệu của một blog.
+ * @param {string} blogId là `_id` của blog.
+ */
+async function deleteOneBlog(blogId) {
+  try {
+    let result = await BlogCollection().deleteOne({ _id: new ObjectId(blogId) })
+    return result
+  } catch (error) {
+    console.error(error.message)
+    return undefined
+  }
 }
 
 export const BlogModel = {
