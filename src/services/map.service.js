@@ -15,7 +15,7 @@ import { CloudinaryProvider } from 'providers/CloudinaryProvider'
 import { OpenWeatherProvider } from 'providers/OpenWeatherProvider'
 
 import { FilterConstants, MapApiStatus } from 'utilities/constants'
-import { getExpectedFieldsProjection } from 'utilities/function'
+// import { getExpectedFieldsProjection } from 'utilities/function'
 import {
   filterRadiusProminenceOrNearBy,
   sortByRatingHighToLow,
@@ -24,6 +24,7 @@ import {
   sortByStarLowToHigh
 } from 'utilities/function'
 import { env } from 'config/environtment'
+import { getExpectedFieldsProjection } from 'utilities/mongo'
 
 /**
  * @typedef GetPlacesServiceProps
@@ -54,6 +55,53 @@ const getPlaces = async (data) => {
     console.log(data)
     let places = await MapModel.findManyInLimit({}, getExpectedFieldsProjection(fields), parseInt(limit), parseInt(skip))
     return places
+  } catch (error) {
+    return undefined
+  }
+}
+
+
+/**
+ * @typedef GetPlacesByIdServiceProps
+ * @property {string} fields
+ * @property {array} arrayPlaceId
+ */
+
+/**
+ * Service này dùng để lấy ra tất cả các places thông qua mảng place_id được cung cấp
+ * @param {GetPlacesByIdServiceProps} data Là một object lấy từ `req.query`.
+ * @returns {Promise<WithId<Document>[] | undefined>}
+ */
+const getPlacesById = async (data) => {
+  // Data của thằng này nó là body.
+  /*
+    data = {
+      arrayPlaceId: ['a', 'b', 'c'],
+      fields: "name;plus_code"
+    }
+  */
+  try {
+    let { arrayPlaceId, fields } = data
+    console.log(data)
+    let places = await MapModel.findManyByPlaceIds(arrayPlaceId, getExpectedFieldsProjection(fields))
+    console.log('🚀 ~ file: map.service.js:86 ~ getPlacesById ~ places:', places)
+
+
+    await axios.all(
+      places.map(place => PhotosModel.findOneByPlaceId(place.place_id))
+    ).then(
+      async (datasReturn) => {
+        datasReturn.map((dataReturn, index) => {
+          places[index].photos = dataReturn.photos
+        })
+      }
+    ).catch(err => console.log(err))
+
+    return {
+      arrPlace: places,
+      nextPageToken: false
+    }
+
   } catch (error) {
     return undefined
   }
@@ -91,6 +139,7 @@ const getPlacesWithPipeline = async (query) => {
     return undefined
   }
 }
+
 
 const getPlaceDetailWithPipeline = async (query) => {
   try {
@@ -620,6 +669,7 @@ const getGeocodingReverse = async (data) => {
 
 export const MapService = {
   getPlaces,
+  getPlacesById,
   getPlacesWithPipeline,
   getPlaceDetailWithPipeline,
   getPlacesTextSearch,

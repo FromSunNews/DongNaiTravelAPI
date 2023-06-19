@@ -7,11 +7,15 @@ const router = express.Router()
 router.route('/places')
   .get(MapController.getPlaces)
 
+router.route('/places_by_id')
+  .post(MapController.getPlacesById)
+
 router.route('/places_text_search')
   .post(MapValidation.getPlacesTextSearch, MapController.getPlacesTextSearch)
 
 router.route('/place_details')
   .post(MapController.getPlaceDetails)
+
 
 router.route('/place_details')
   .get(MapController.getPlaceDetailsWithPipeline)
