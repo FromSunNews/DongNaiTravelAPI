@@ -57,7 +57,7 @@ async function insertOneBlog(data) {
 */
 /**
  * Hàm này dùng để tìm một blog theo `_id` và `name`
- * @param {{fields: string, name?: string, _id?: string}} data Một object chứa `_id` hoặc `name` từ `req.query`
+ * @param {{author: string, blogId: string, fields: string, user}} data Một object chứa `_id` hoặc `name` từ `req.query`
  */
 async function findOneBlog(data) {
   try {

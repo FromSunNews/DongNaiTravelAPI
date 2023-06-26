@@ -31,4 +31,16 @@ router.route('/get_one')
 router.route('/get_multiple')
   .get(BlogController.getBlogs)
 
+router.route('/delete_one')
+  .delete(AuthMiddleware.isAuthorized, BlogController.deleteOneBlog)
+
+router.route('/create_comment')
+  .post(AuthMiddleware.isAuthorized, BlogController.createBlogComment)
+
+router.route('/get_comments')
+  .get(BlogController.getBlogComments)
+
+router.route('/delete_comment')
+  .delete(AuthMiddleware.isAuthorized, BlogController.deleteBlogComent)
+
 export const blogRoutes = router

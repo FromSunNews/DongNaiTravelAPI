@@ -73,6 +73,7 @@ export function createBlog(io, socket, eventName) {
   let totalSize
   let uploadedChunkSize
   let fullTextToSpeech = ['VN_FEMALE_1', 'VN_MALE_1']
+  let cloudinaryResourceUrls = []
   // let fullTextToSpeech = ['VN_FEMALE_1', 'VN_MALE_1', 'EN_FEMALE_1', 'EN_MALE_1']
 
   /**
@@ -188,6 +189,7 @@ export function createBlog(io, socket, eventName) {
         isUploadDone = undefined
         uploadedChunkSize = undefined
         totalSize = undefined
+        cloudinaryResourceUrls = []
 
         socket.emit(eventName, createMessage({ isDone: true, progress: 100 }, 'Complete!', {}))
       } else {

@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer'
 
-import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+import { CloudinaryProvider } from 'providers/cloudinary'
 
+import { BlogContentModel } from 'models/blog_content'
 import { ContentModel } from 'models/content.model'
 import { BlogModel } from 'models/blog'
 import { UserModel } from 'models/user.model'
@@ -171,9 +172,61 @@ async function updateOneBlogByCase(data) {
   }
 }
 
+/**
+ * Hàm này dùng để xoá đi một blog nào đó theo `blogId` hoặc là `author` (`_id` của user).
+ * Nhận vào một object là request body.
+ *
+ * Để xoá một blog, thì mình phải xác định xem các đối tượng có quan hệ với blog.
+ * - blog content: là một đối tượng chứa content của blog.
+ * - comment ids: là một đối tượng chứa các comments của blog.
+ * Đó là những resource nằm trong database, ngoài ra còn một số resource khác như là:
+ * - Ảnh đại diện của blog.
+ * - Ảnh trong content của blog.
+ * - Speech của content.
+ *
+ * Như vậy thì đàu tiên mình phải xoá các resource khác của blog, sau khi xoá xong thì
+ * sẽ xoá resource trong database.
+ *
+ * @param {{ blogId: string }} data
+ */
+async function deleteOneBlog(data) {
+  try {
+    if (!data.blogId) throw new Error('Delete a blog require its _id. Blog\'s _id not found!')
+    let blog = await BlogModel.findOneBlog(data)
+    let cloudinaryResourceUrls = [blog.avatar]
+    let speechKeys = Object.keys(blog.content.speech)
+    let [cloudinaryImageUrls] = getBase64PhotoInMD(blog.content.plainTextMarkFormat, { removeMD: true })
+    let deleteResourcesResult
+
+    // Lấy các url trong
+    for (let speechKey of speechKeys) {
+      cloudinaryResourceUrls.push(blog.content.speech[speechKey])
+    }
+
+    for (let cloudinaryImageUrl of cloudinaryImageUrls) {
+      cloudinaryResourceUrls.push(cloudinaryImageUrl)
+    }
+
+    console.log('Cloudinary resource urls of blog: ', cloudinaryResourceUrls)
+    deleteResourcesResult = await CloudinaryProvider.deleteResources(cloudinaryResourceUrls)
+    if (!deleteResourcesResult) throw new Error('Cannot delete cloudinary resource of this blog.')
+    console.log('Delete cloudinary resource result: ', deleteResourcesResult)
+
+    let deleteBlogContentResult = await BlogContentModel.deleteOneBlogContent(blog.contentId)
+    if (deleteBlogContentResult.deletedCount < 1) throw new Error('Cannot delete blog\'s content.')
+
+    let deleletBlogResult = await BlogModel.deleteOneBlog(blog._id.toString())
+    return deleletBlogResult
+  } catch (error) {
+    console.error(error.message)
+    return error.message
+  }
+}
+
 export const BlogService = {
   createBlog,
   getBlog,
   getBlogs,
-  updateOneBlogByCase
+  updateOneBlogByCase,
+  deleteOneBlog
 }
