@@ -8,6 +8,7 @@ import { TextToSpeechConstants } from 'utilities/constants'
 import { SendMessageToSlack } from 'providers/SendMessageToSlack'
 import axios from 'axios'
 import { cloneDeep } from 'lodash'
+import { ChatGptProvider } from 'providers/ChatGptProvider'
 
 // const createNew = async (data) => {
 //   console.log('🚀 ~ file: content.service.js:7 ~ createNew ~ data:', data)
@@ -146,6 +147,27 @@ const createNew = async (data) => {
   }
 }
 
+const getTextToSpeechTesting = async (data) => {
+  console.log('🚀 ~ file: content.service.js:7 ~ createNew ~ data:', data)
+  // data sẽ có dạng :
+  // data = {
+  //   place_id: '123521543hfngdsh',
+  //   textToSpeechId: 'VN_FEMALE_1' || 'VN_FEMALE_2' || 'VN_MALE_1' || 'VN_MALE_2' || 'EN_FEMALE_1' || 'EN_FEMALE_2' || 'EN_MALE_1' || 'EN_MALE_2'
+  // }
+  try {
+    const textToSpeech = await TextToSpeechProvider.generateSpeech({
+      text: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it ting and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it ting and typesettin',
+      languageCode: TextToSpeechConstants[data.textToSpeechId].languageCode,
+      name: TextToSpeechConstants[data.textToSpeechId].name
+    })
+
+    return textToSpeech
+
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 // sử dụng getTextToSpeech khi mà người click vào btn giọng đọc
 const getTextToSpeech = async (data) => {
   console.log('🚀 ~ file: content.service.js:7 ~ createNew ~ data:', data)
@@ -256,7 +278,33 @@ const getTextToSpeech = async (data) => {
   }
 }
 
+const suggestTitle = async (data) => {
+  console.log('🚀 ~ file: content.service.js:7 ~ createNew ~ data:', data)
+  // data sẽ có dạng :
+  // data = {
+  //   title: 'Địa điểm du lịch mùa hè 2023',
+  //   numberOfTitle: 10
+  // }
+  try {
+    const query = `Bạn là một người tạo ra những tiêu đề thu hút khách hàng. Hãy giúp tôi tạo ra ${data.numberOfTitle} tiêu đề dựa vào tiêu đề sau đây "${data.title}". Chú ý dữ liệu trả về phải sát nghĩa ban đầu, bằng tiếng việt và mỗi tiều đề phải được đặt trong [] ngăn cách nhau bởi dấu |. Ví dụ "[title1]|[title2]|[title3]|[title4]...|[title10]"`
+
+    let rawTextTitle = await ChatGptProvider.textGeneration(query)
+
+    const rawTitleArray = rawTextTitle.response.split('|')
+    const titleArray = rawTitleArray.map(i => i.substring(1, i.length - 1))
+
+    return {
+      titleArray: titleArray
+    }
+
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const ContentService = {
   createNew,
-  getTextToSpeech
+  getTextToSpeech,
+  getTextToSpeechTesting,
+  suggestTitle
 }

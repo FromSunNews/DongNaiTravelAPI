@@ -14,7 +14,19 @@ const createNew = async (req, res) => {
 
 const getTextToSpeech = async (req, res) => {
   try {
-    const result = await ContentService.getTextToSpeech(req.body)
+    const result = await ContentService.getTextToSpeechTesting(req.body)
+    res.status(HttpStatusCode.OK).json(result)
+  } catch (error) {
+    res.status(HttpStatusCode.INTERNAL_SERVER).json({
+      errors: error.message
+    })
+  }
+}
+
+
+const suggestTitle = async (req, res) => {
+  try {
+    const result = await ContentService.suggestTitle(req.body)
     res.status(HttpStatusCode.OK).json(result)
   } catch (error) {
     res.status(HttpStatusCode.INTERNAL_SERVER).json({
@@ -25,5 +37,6 @@ const getTextToSpeech = async (req, res) => {
 
 export const ContentController = {
   createNew,
-  getTextToSpeech
+  getTextToSpeech,
+  suggestTitle
 }

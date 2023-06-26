@@ -154,7 +154,9 @@ export function createBlog(io, socket, eventName) {
               }
             }
           ))
-        )
+        ).catch(err => {
+          console.log('Lỗi gọi gg api nè ba:', err)
+        })
         base64SpeechBuffers = base64SpeechResponses.map(base64SpeechResponse => {
           let base64 = 'data:audio/mpeg;base64,' + base64SpeechResponse.data.audioContent
           console.log('Base64 audio: ', base64.substring(0, 100))

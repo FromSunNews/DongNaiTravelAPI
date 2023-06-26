@@ -4,6 +4,7 @@ import encodeUrl from 'encodeurl'
 
 // Phuong: https://developers.google.com/maps/documentation/places/web-service/search-text
 const getPlacesTextSearchAPI = async (params) => {
+  console.log('🚀 ~ file: PlacesSearchProvider.js:7 ~ getPlacesTextSearchAPI ~ params:', params)
   // Phuong: params là object
 
   const urlFields = ['query', 'radius', 'rankby', 'language', 'location', 'maxprice', 'minprice', 'opennow', 'pagetoken', 'region', 'type', 'key']

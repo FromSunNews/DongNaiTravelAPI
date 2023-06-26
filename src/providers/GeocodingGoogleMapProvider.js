@@ -10,7 +10,7 @@ async function getPlaceIdFromCoords(latitude, longitude) {
     const response = await axios.get(url)
 
     if (response?.data?.status === 'OK') {
-      return response.data.results[0].place_id
+      return response.data.results[0]
     }
     else
       throw new Error(MapApiStatus[response.data.status.status])

@@ -10,4 +10,7 @@ router.route('/create_new')
 router.route('/text_to_speech')
   .post(ContentController.getTextToSpeech)
 
+router.route('/suggest_title')
+  .post(ContentController.suggestTitle)
+
 export const contentRoutes = router

@@ -5,12 +5,14 @@ import { ChatGptProvider } from 'providers/ChatGptProvider'
 import { OpenWeatherProvider } from 'providers/OpenWeatherProvider'
 import { dfConfig } from 'config/dfConfig'
 import { MapService } from './map.service'
+import { GeocodingGoogleMapProvider } from 'providers/GeocodingGoogleMapProvider'
 
 const getText = async (data) => {
   // data = {
   //  question: 'string',
   //  currentUserId: 'string',
   //  languageCode: 'string',
+  //  coor: {"latitude": 10.456781258055845, "longitude": 106.72097991692522}
   // }
   try {
     console.log('🚀 ~ file: chatbot.service.js:17 ~ getText ~ data:', data)
@@ -52,7 +54,8 @@ const getText = async (data) => {
 
     if (action === 'input.unknown') {
       // Nếu hành động không được xác định thì chuyển qua hỏi con chatGPT
-      let result = await ChatGptProvider.textGeneration(queryText, action)
+      let result = await ChatGptProvider.textGeneration(queryText)
+      result.action = action
       return result
     } else if (action === 'input.suggest-place') {
       // Tổng họp place
@@ -139,6 +142,122 @@ const getText = async (data) => {
           response: responseText,
           action: 'input.unfinish'
         }
+      }
+    } else if (action === 'input.location-on-map') {
+      // khi vào TH location-on-map thì chúng ta goi search text place
+      return {
+        response: 'Sau đây là thông tin về địa điểm của bạn',
+        action: action,
+        data: {
+          query: data.question,
+          sortBy: 'DEFAULT',
+          radius: '5000',
+          location: data.coor
+        }
+      }
+    } else if (action === 'input.direction-a-to-b') {
+      const fields = ['admin-area', 'city', 'street-address', 'business-name', 'country', 'subadmin-area', 'island', 'zip-code', 'shortcut']
+
+      let start_location = res[0].queryResult.parameters.fields?.start_location?.stringValue
+      if (!start_location && res[0].queryResult.parameters.fields?.start_location?.structValue) {
+        fields.map(field => {
+          if (res[0].queryResult.parameters.fields?.start_location?.structValue.fields[field].stringValue) {
+            start_location = res[0].queryResult.parameters.fields?.start_location?.structValue.fields[field].stringValue
+          }
+        })
+      }
+      console.log('🚀 ~ file: chatbot.service.js:158 ~ getText ~ start_location:', start_location)
+
+      let end_location = res[0].queryResult.parameters.fields?.end_location?.stringValue
+      if (!end_location && res[0].queryResult.parameters.fields?.end_location?.structValue) {
+        fields.map(field => {
+          if (res[0].queryResult.parameters.fields?.end_location?.structValue.fields[field].stringValue) {
+            end_location = res[0].queryResult.parameters.fields?.end_location?.structValue.fields[field].stringValue
+          }
+        })
+      }
+      console.log('🚀 ~ file: chatbot.service.js:161 ~ getText ~ end_location:', end_location)
+
+      const here = res[0].queryResult.parameters.fields?.here?.stringValue
+      console.log('🚀 ~ file: chatbot.service.js:164 ~ getText ~ here:', here)
+
+      // TH cơ bản có cả hai start_location và end_location
+      if (start_location && end_location) {
+        return {
+          response: 'Sau đây là tuyến đường của bạn',
+          action: action,
+          data: {
+            oriAddress: start_location,
+            desAddress: end_location,
+            oriPlaceId: null,
+            desPlaceId: null,
+            oriCoor: null,
+            desCoor: null,
+            modeORS: 'driving-car',
+            modeGCP: 'DRIVE',
+            typeOri: 'address',
+            typeDes: 'address',
+            routeModifiers: { avoidTolls: false, avoidHighways: false, avoidFerries: false },
+            languageCode: 'vi'
+          }
+        }
+      }
+      // TH có here và có một trong hai thằng start_location và end_location
+      else if (here && (start_location || end_location)) {
+        if (start_location) {
+          return {
+            response: 'Sau đây là tuyến đường của bạn',
+            action: action,
+            data: {
+              oriAddress: start_location,
+              desAddress: null,
+              oriPlaceId: null,
+              desPlaceId: null,
+              oriCoor: null,
+              desCoor: data.coor,
+              modeORS: 'driving-car',
+              modeGCP: 'DRIVE',
+              typeOri: 'address',
+              typeDes: 'coordinate',
+              routeModifiers: { avoidTolls: false, avoidHighways: false, avoidFerries: false },
+              languageCode: 'vi'
+            }
+          }
+        } else if (end_location) {
+          return {
+            response: 'Sau đây là tuyến đường của bạn',
+            action: action,
+            data: {
+              oriAddress: null,
+              desAddress: end_location,
+              oriPlaceId: null,
+              desPlaceId: null,
+              oriCoor: data.coor,
+              desCoor: null,
+              modeORS: 'driving-car',
+              modeGCP: 'DRIVE',
+              typeOri: 'coordinate',
+              typeDes: 'address',
+              routeModifiers: { avoidTolls: false, avoidHighways: false, avoidFerries: false },
+              languageCode: 'vi'
+            }
+          }
+        }
+      } else {
+        return {
+          response: responseText,
+          action: 'input.unfinish'
+        }
+      }
+    } else if (action === 'input.where-am-i') {
+      // sử dụng Geocoding để lấy được địa chỉ
+      console.log('data.coor', data.coor)
+      const geocoding = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.coor.latitude, data.coor.longitude)
+      responseText = responseText.replace('[address]', geocoding.formatted_address)
+      return {
+        response: responseText,
+        action: action,
+        data: geocoding
       }
     } else {
       return {

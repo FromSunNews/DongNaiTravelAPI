@@ -57,7 +57,8 @@ const handleItineraryRequest = async (content, io, socketIdMap, currentUserId) =
   }
 }
 
-const textGeneration = async (queryText, action) => {
+const textGeneration = async (queryText) => {
+  console.log('🚀 ~ file: ChatGptProvider.js:61 ~ textGeneration ~ queryText:', queryText)
   try {
 
     const configuration = new Configuration({
@@ -70,20 +71,18 @@ const textGeneration = async (queryText, action) => {
       model: 'text-davinci-003',
       prompt: `Human: ${queryText}\nAI: `,
       temperature: 0.1,
-      max_tokens: 2500,
+      max_tokens: 3500,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0.6,
       stop: ['Human:', 'AI:']
     })
     return {
-      response: `${response.data.choices[0].text}`.trimStart(), // loại bỏ ký tự \n đàu đòng
-      action: action
+      response: `${response.data.choices[0].text}`.trimStart()
     }
   } catch (error) {
     return {
-      response: 'Sorry, I\'m not able to help with that.',
-      action: action
+      response: 'Sorry, I\'m not able to help with that.'
     }
   }
 }

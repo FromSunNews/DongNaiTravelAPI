@@ -47,31 +47,43 @@ const getRouteDirection = async (data) => {
   // }
   console.log('🚀 ~ file: direction.service.js:256 ~ getPlaceDetails ~ data:', data)
   try {
-    let oriToCheck
-    let desToCheck
-
-    let result
+    let oriToCheck, desToCheck, result, desRouteInfo, oriRouteInfo
 
     if (data.typeOri === 'place_id') {
       oriToCheck = data.oriPlaceId
     } else if (data.typeOri === 'address') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      const geocodingOri = GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      const geocodingOri = await GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      console.log('🚀 ~ file: direction.service.js:60 ~ getRouteDirection ~ geocodingOri:', geocodingOri)
       oriToCheck = geocodingOri.place_id
+      oriRouteInfo = {
+        place_id: geocodingOri.place_id,
+        name: geocodingOri.formatted_address,
+        geometry: geocodingOri.geometry
+      }
+
     } else if (data.typeOri === 'coordinate') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      oriToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.oriCoor.latitude, data.oriCoor.longitude)
+      const geocodingOri = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.oriCoor.latitude, data.oriCoor.longitude)
+      oriToCheck = geocodingOri.place_id
     }
 
     if (data.typeDes === 'place_id') {
       desToCheck = data.desPlaceId
     } else if (data.typeDes === 'address') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      const geocodingDes = GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.oriAddress)
+      const geocodingDes = await GeocodingGoogleMapProvider.getPlaceIdFromAddress(data.desAddress)
+      console.log('🚀 ~ file: direction.service.js:71 ~ getRouteDirection ~ geocodingDes:', geocodingDes)
       desToCheck = geocodingDes.place_id
+      desRouteInfo = {
+        place_id: geocodingDes.place_id,
+        name: geocodingDes.formatted_address,
+        geometry: geocodingDes.geometry
+      }
     } else if (data.typeDes === 'coordinate') {
       // geocoding 2 thằng origin và destination để lấy chính xác place_id để đi kiểm tra trong db
-      desToCheck = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.desCoor.latitude, data.desCoor.longitude)
+      const geocodingDes = await GeocodingGoogleMapProvider.getPlaceIdFromCoords(data.desCoor.latitude, data.desCoor.longitude)
+      desToCheck = geocodingDes.place_id
     }
 
     console.log('oriToCheck', oriToCheck)
@@ -268,6 +280,11 @@ const getRouteDirection = async (data) => {
     //   data: kết quả tương ứng
     //   callFrom: 'ORS' || 'GCP'
     // }
+
+    if (data.isCallFromChatBot) {
+      result.oriRouteInfo = oriRouteInfo
+      result.desRouteInfo = desRouteInfo
+    }
 
     console.log('🚀 ~ file: direction.service.js:210 ~ getRouteDirection ~ result:', result)
     return result
