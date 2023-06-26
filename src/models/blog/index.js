@@ -153,7 +153,7 @@ async function findManyBlog(data) {
  * - addEle/removeEle: dùng để thêm/xoá một phần tử của field. Yêu cầu: trường đó phải là một mảng, và tồn tại.
  * @param {string} blogId là `_id` của blog.
  * @param updateData Dữ liệu cần update.
- * @param {string} updateCase Case cần update.
+ * @param {keyof BlogUpdateCases} updateCase Case cần update.
  * @returns
  */
 async function updateOneBlogByCase(blogId, updateData, updateCase = 'default') {

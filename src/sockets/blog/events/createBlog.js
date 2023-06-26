@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Buffer } from 'buffer'
-import { CloudinaryProvider } from 'providers/CloudinaryProvider'
+import { CloudinaryProvider } from 'providers/cloudinary'
 
 import { BlogModel } from 'models/blog'
 import { BlogContentModel } from 'models/blog_content'
@@ -56,6 +56,51 @@ function createMessage(status, text = '', data = undefined) {
 }
 
 /**
+ * Hàm này dùng để tạo ma trận n x m từ mảng một chiều.
+ * @param {Array<any>} arr
+ * @param {number} n Là col
+ */
+function getNxMMatrix(arr, n) {
+  let length = arr.length
+  let matrix = []
+  let row = []
+  for (let i = 0; i <= length; i++) {
+    if (i % n === 0 && i !== 0) {
+      matrix.push(row)
+      row = [arr[i]]
+      continue
+    }
+    row.push(arr[i])
+  }
+  return matrix
+}
+
+/**
+ * Hàm này dùng để chia content ra thành nhiều phần theo `LIMIT_BYTES`. Tránh việc
+ * upload có thể bị nặng hợn.
+ * @param {string} content
+ * @param {number} LIMIT_BYTES
+ */
+function getContentParts(content, LIMIT_BYTES = 2000) {
+  let bytes = content.length
+  let numberOfParts = parseInt(bytes / LIMIT_BYTES)
+  let remainBytes = bytes % LIMIT_BYTES
+  let numberOfRequests = numberOfParts + (remainBytes > 0 ? 1 : 0)
+
+  let start = 0
+  let end = bytes < LIMIT_BYTES ? bytes : LIMIT_BYTES
+  let parts = []
+  for (let i = 0; i < numberOfRequests; i++) {
+    parts.push(content.substring(start, end))
+    start = end
+    end += LIMIT_BYTES
+    if (end > bytes) end = bytes
+  }
+
+  return parts
+}
+
+/**
  * Hàm này dùng để tạo một blog và có thể theo dõi được tiến trình tạo blog. Như là
  * - Tải blog lên
  * - Xử lý ảnh
@@ -105,7 +150,7 @@ export function createBlog(io, socket, eventName) {
         base64Photos.unshift(blog.avatar)
 
         let base64PhotoBuffers = base64Photos.map(base64Photo => Buffer.from(base64Photo))
-        let base64SpeechBuffers
+        let base64SpeechBuffers = []
         let base64SpeechLinks
         let completeContent = content
         let plainText
@@ -124,8 +169,12 @@ export function createBlog(io, socket, eventName) {
         console.log('Photo links: ', photoLinks)
         socket.emit(eventName, createMessage({ progress: 75 }, 'Upload images to image server done'))
 
+        cloudinaryResourceUrls.push(blogAvatarLink.url)
         if (photoLinks.length >= 1) {
-          let links = photoLinks.map(photoLink => photoLink.url)
+          let links = photoLinks.map(photoLink => {
+            cloudinaryResourceUrls.push(photoLink.url)
+            return photoLink.url
+          })
           completeContent = replaceBase64PhotoWithLink(content, links)
         }
 
@@ -139,12 +188,27 @@ export function createBlog(io, socket, eventName) {
         }
 
         socket.emit(eventName, createMessage({ progress: 80 }, 'Creating speech...'))
-        let base64SpeechResponses = await axios.all(
-          fullTextToSpeech.map((textToSpeechId) => axios.post(
+        let plainTextParts = getContentParts(plainText)
+        let partsLength = plainTextParts.length
+        console.log('Parts: ', plainTextParts)
+        /**
+         * `base64SpeechPromises` sẽ có dạng
+         * `[[promise<string>, promise<string>, ..., promise<string>(n)], [promise<string>, promise<string>, ..., promise<string>(n)], ...,[...](m)]`
+         * Tuỳ theo part và số lượng voice muốn tạo, thì sẽ trả về kiểu khác. Cụ thể là một ma trận n x m
+         * - n là số parts
+         * - m là số voice
+         *
+         * Hiện tại thì có 2 voice cho tiếng Việt nên sẽ trả về một mảng gồm 2 phần tử, mỗi phần tử sẽ chứa các promises của
+         * part.
+         */
+        let base64SpeechsPromises = fullTextToSpeech.map(textToSpeechId => {
+          // Hãy xem mỗi part này là một plainText. Với n parts plainText thì mình sẽ có n * 2 request.
+          console.log('Request [Language]: ', TextToSpeechConstants[textToSpeechId])
+          return plainTextParts.map(part => axios.post(
             `https://texttospeech.googleapis.com/v1/text:synthesize?key=${env.MAP_API_KEY}`,
             {
               input: {
-                text: plainText
+                text: part
               },
               voice: {
                 languageCode: TextToSpeechConstants[textToSpeechId].languageCode,
@@ -155,12 +219,33 @@ export function createBlog(io, socket, eventName) {
               }
             }
           ))
-        )
-        base64SpeechBuffers = base64SpeechResponses.map(base64SpeechResponse => {
-          let base64 = 'data:audio/mpeg;base64,' + base64SpeechResponse.data.audioContent
-          console.log('Base64 audio: ', base64.substring(0, 100))
-          return Buffer.from(base64)
         })
+
+        /**
+         * Ở bước này, từ `[[promiseVoice1A, promiseVoice2A], [promiseVoice1B, promiseVoice2B]]`
+         * thành một mảng phẳng `[promiseVoice1A, promiseVoice2A, promiseVoice1B, promiseVoice2B]`
+         * Bởi vì mình chỉ nên dùng một Promise.all (axios.all) cho quá trình gọi nhiều request thôi.
+         *
+         * Khi có kết quả trả về thì base64 cũng sẽ theo giá trị đó, cho nên là mình cũng phải làm
+         * sao cho ráp đúng lại với nhau.
+         */
+        console.log('Promises: ', base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
+        let base64SpeechResponses = await axios.all(base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
+        let base64SpeechResponsesLength = base64SpeechResponses.length
+        let base64Speechs = ''
+
+        for (let i = 0; i <= base64SpeechResponsesLength; i++) {
+          let base64Speech = base64SpeechResponses[i]?.data.audioContent
+          if (i === 0) {
+            base64Speech = 'data:audio/mpeg;base64,' + base64Speech
+          }
+
+          if (i % partsLength === 0 && i !== 0) {
+            base64SpeechBuffers.push(Buffer.from(base64Speechs))
+            base64Speechs = 'data:audio/mpeg;base64,' + base64Speech
+          }
+          base64Speechs += base64Speech
+        }
 
         socket.emit(eventName, createMessage({ progress: 85 }, 'Uploading speech...'))
         base64SpeechLinks = await CloudinaryProvider.streamUploadMutiple(base64SpeechBuffers, {
@@ -169,7 +254,9 @@ export function createBlog(io, socket, eventName) {
         })
 
         base64SpeechLinks.forEach((base64SpeechLink, index) => {
+          console.log('Speech cloudinary response: ', base64SpeechLink)
           contentDoc.speech[fullTextToSpeech[index]] = base64SpeechLink.url
+          cloudinaryResourceUrls.push(base64SpeechLink.url)
         })
 
         insertedContent = await BlogContentModel.insertOneBlogContent(contentDoc)
@@ -190,6 +277,7 @@ export function createBlog(io, socket, eventName) {
         uploadedChunkSize = undefined
         totalSize = undefined
         cloudinaryResourceUrls = []
+        base64SpeechBuffers = []
 
         socket.emit(eventName, createMessage({ isDone: true, progress: 100 }, 'Complete!', {}))
       } else {
@@ -203,14 +291,17 @@ export function createBlog(io, socket, eventName) {
         let progress
         blogContent += jsonData
         uploadedChunkSize += message.data.chunkSize
-        progress = uploadedChunkSize / totalSize * 100
-        console.log('Uploading...')
+        progress = (uploadedChunkSize / totalSize * 100) > 100 ? 100 : (uploadedChunkSize / totalSize * 100)
         socket.emit(eventName, createMessage({ canUpload: true, progress: progress }, 'Uploading...'))
       }
     } catch (error) {
-      socket.emit(eventName, createMessage({ isError: true }, error.message ))
-      blogContent = ''
-      isUploadDone = undefined
+      console.log('[ERROR] Cloudinary resource url: ', cloudinaryResourceUrls)
+      CloudinaryProvider.deleteResources(cloudinaryResourceUrls).then(() => {
+        socket.emit(eventName, createMessage({ isError: true }, error.message ))
+        blogContent = ''
+        isUploadDone = undefined
+        cloudinaryResourceUrls = []
+      })
     }
   })
 }

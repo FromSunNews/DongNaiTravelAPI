@@ -15,6 +15,9 @@ async function createBlogComment(body) {
     if (!(await BlogModel.findOneBlog({ blogId: body.blogId }))) throw new Error('This blog is not exist!')
 
     let result = await BlogCommentsModel.insertOneBlogComment(body)
+
+    await BlogModel.updateOneBlogByCase(result.blogId, undefined, 'inc:userCommentsTotal')
+
     return result
   } catch (error) {
     console.error(error.message)
@@ -48,7 +51,13 @@ async function getBlogComments(query) {
  */
 async function deleteBlogComment(body) {
   try {
+    console.log('Body [Delete blog comment]: ', body)
     let result = await BlogCommentsModel.deleteOneBlogComment(body)
+
+    if (result.modifiedCount !== 0) {
+      await BlogModel.updateOneBlogByCase(body.blogId, undefined, 'dec:userCommentsTotal')
+    }
+
     return result
   } catch (error) {
     console.error(error.message)

@@ -200,7 +200,8 @@ async function deleteOneBlog(data) {
 
     // Lấy các url trong
     for (let speechKey of speechKeys) {
-      cloudinaryResourceUrls.push(blog.content.speech[speechKey])
+      let url = blog.content.speech[speechKey]
+      if (url) cloudinaryResourceUrls.push(blog.content.speech[speechKey])
     }
 
     for (let cloudinaryImageUrl of cloudinaryImageUrls) {

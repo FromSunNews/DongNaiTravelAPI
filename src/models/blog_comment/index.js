@@ -92,7 +92,7 @@ async function insertOneBlogComment(data) {
       )
     }
 
-    commentDoc.blodId = blogId
+    commentDoc.blogId = blogId
     commentDoc.exactKey = blogCommentList._id
 
     return commentDoc
@@ -204,6 +204,7 @@ const findManyBlogComment = (function() {
               exactKey: 1,
               text: 1,
               author: {
+                _id: 1,
                 displayName: 1,
                 firstName: 1,
                 lastName: 1,
