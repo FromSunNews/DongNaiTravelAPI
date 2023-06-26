@@ -71,6 +71,13 @@ const createNew = async (data) => {
 }
 
 // Tuan: Cập nhật user bằng các trường hợp
+/**
+ * Update một user theo case và với dữ liệu cung cấp.
+ * @param {*} id `_id` của người dùng cần update.
+ * @param {any} data dữ liệu cần update.
+ * @param {keyof UserUpdateCases} updateCase trường hợp update.
+ * @returns
+ */
 const updateOneByCase = async(id, data, updateCase = 'default') => {
   try {
     let newUpdateData

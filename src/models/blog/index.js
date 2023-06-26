@@ -57,7 +57,7 @@ async function insertOneBlog(data) {
 */
 /**
  * Hàm này dùng để tìm một blog theo `_id` và `name`
- * @param {{fields: string, name?: string, _id?: string}} data Một object chứa `_id` hoặc `name` từ `req.query`
+ * @param {{author: string, blogId: string, fields: string, user}} data Một object chứa `_id` hoặc `name` từ `req.query`
  */
 async function findOneBlog(data) {
   try {
@@ -153,7 +153,7 @@ async function findManyBlog(data) {
  * - addEle/removeEle: dùng để thêm/xoá một phần tử của field. Yêu cầu: trường đó phải là một mảng, và tồn tại.
  * @param {string} blogId là `_id` của blog.
  * @param updateData Dữ liệu cần update.
- * @param {string} updateCase Case cần update.
+ * @param {keyof BlogUpdateCases} updateCase Case cần update.
  * @returns
  */
 async function updateOneBlogByCase(blogId, updateData, updateCase = 'default') {

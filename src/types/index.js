@@ -132,6 +132,17 @@
  * @property {Array<string>} isLiked
  */
 
+///
+/// Types for Blog comment
+///
+/**
+ * @typedef BlogCommentDataProps
+ * @property {string} authorId
+ * @property {string} text
+ * @property {number} createdAt
+ * @property {number} updatedAt
+ */
+
 /**
  * @typedef SpecialtyDataFieldProps
  * @property {string} field
