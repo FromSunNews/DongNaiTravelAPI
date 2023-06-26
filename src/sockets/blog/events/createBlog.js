@@ -219,6 +219,8 @@ export function createBlog(io, socket, eventName) {
               }
             }
           ))
+        }).catch(err => {
+          console.log('Lỗi gọi gg api nè ba:', err)
         })
 
         /**
