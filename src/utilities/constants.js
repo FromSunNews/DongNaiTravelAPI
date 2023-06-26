@@ -45,19 +45,19 @@ export const QueryValueSeperator = ';'
 
 export const TextToSpeechConstants = {
   VN_FEMALE_1: {
-    languageCode: 'vi',
+    languageCode: 'vi-VN',
     name: 'vi-VN-Standard-C'
   },
   VN_FEMALE_2: {
-    languageCode: 'vi',
+    languageCode: 'vi-VN',
     name: 'vi-VN-Standard-A'
   },
   VN_MALE_1: {
-    languageCode: 'vi',
+    languageCode: 'vi-VN',
     name: 'vi-VN-Standard-B'
   },
   VN_MALE_2: {
-    languageCode: 'vi',
+    languageCode: 'vi-VN',
     name: 'vi-VN-Standard-D'
   },
   EN_FEMALE_1: {

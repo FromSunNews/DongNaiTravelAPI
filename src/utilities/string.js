@@ -84,20 +84,29 @@ export function removeMDFromString(md) {
 }
 
 /**
- * Hàm này dùng để lấy ra tất cả image trong `md` (Chuỗi markdown). Và trả về một chuỗi mới
- * VD:
- * - Input: `Xin chao, day la mot tam anh ![](data:image/png;base64,djhfkj)`.
- * - Output: `Xin chao, day la mot tam anh ![]()`
+ * @typedef GetBase64PhotoInMDOptionProps
+ * @property {boolean} removeMD
+ */
+
+/**
+ * Hàm này dùng để lấy ra tất cả image trong `md` (Chuỗi markdown). Trả về một mảng bao gồm:
+ * `[photos, content_without_photos]`
  * @param {string} md chuỗi markdown
+ * @param {GetBase64PhotoInMDOptionProps} options
  * @returns {Array<string>}
  */
-export function getBase64PhotoInMD(md, isFullUrl = false) {
+export function getBase64PhotoInMD(md, options) {
+  options = Object.assign({
+    removeMD: false
+  }, options)
+
   let photos = []
   let matches = md.matchAll(MD.IMAGE.GM)
+  let replaceBase64MD = options.removeMD ? '' : '![]()'
   matches = [...matches]
   matches.forEach(match => {
     let base64 = match[1]
-    md = md.replace(MD['IMAGE'].DEFAULT, '![]()')
+    md = md.replace(MD['IMAGE'].DEFAULT, replaceBase64MD)
     photos.push(base64)
   })
   return [photos, md]

@@ -1,9 +1,10 @@
 
+import axios from 'axios'
 import cloudinary from 'cloudinary'
 import streamifier from 'streamifier'
 import { env } from 'config/environtment'
 
-import { CloudinaryUtils } from './cloudinary/utils'
+import { CloudinaryUtils } from './utils'
 /**
  * Tài liệu tham khảo:
  * https://cloudinary.com/blog/node_js_file_upload_to_a_local_server_or_to_the_cloud
@@ -68,10 +69,32 @@ async function streamUploadMutiple(fileBuffers, options) {
   else return
 }
 
+/**
+ * Hàm này dùng để xoá các resource trên Cloudinary thông qua các url của resource đó.
+ * Ngoài ra cũng có thể xoá một resource duy nhất.
+ * @param {Array<string>} resourceUrls một mảng các url của resource trên Cloudinary
+ * @returns
+ */
 async function deleteResources(resourceUrls) {
   try {
-    let { publicId } = CloudinaryUtils.getPublicIdFromUrl(resourceUrls)
-    let result = await cloudinaryV2.api.delete_resources([publicId])
+    let resourcesInformation = CloudinaryUtils.getResourcesInformation(resourceUrls)
+    let publicIdsByType = {}
+    let promises = []
+
+    for (let resourceInformation of resourcesInformation) {
+      if (!publicIdsByType[resourceInformation.resourceType]) {
+        publicIdsByType[resourceInformation.resourceType] = []
+      }
+      publicIdsByType[resourceInformation.resourceType].push(resourceInformation.publicId)
+    }
+
+    let types = Object.keys(publicIdsByType)
+
+    for (let type of types) {
+      promises.push(cloudinaryV2.api.delete_resources(publicIdsByType[type], { resource_type: type }))
+    }
+
+    let result = await axios.all(promises)
     return result
   } catch (error) {
     console.error(error.message)

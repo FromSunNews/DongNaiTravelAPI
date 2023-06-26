@@ -4,13 +4,8 @@ import {
   BlogFieldNameProps
 } from 'types'
 
-
-/**
- * @type {BlogFieldNameProps}
- */
 export const blogFields = {
   authorId: 'authorId',
-  commentIds: 'commentIds',
   contentId: 'contentId',
   name: 'name',
   avatar: 'avatar',
@@ -27,7 +22,6 @@ export const blogFields = {
 
 export const blogCollectionSchema = Joi.object({
   [blogFields.authorId]: Joi.string().required(),
-  [blogFields.commentIds]: Joi.array().items(Joi.string()).default([]),
   [blogFields.contentId]: Joi.string().required(),
   [blogFields.name]: Joi.string().required(),
   [blogFields.avatar]: Joi.string().required(),

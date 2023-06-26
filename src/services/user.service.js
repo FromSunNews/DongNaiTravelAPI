@@ -256,13 +256,11 @@ const updateOneByCase = async(id, data) => {
     let userId = id
     let updateCase = data.updateCase
     let updateData = data.updateData
-    console.log('Update data: ', updateData)
-    console.log('Update Case: ', updateCase)
+
     let result = await UserModel.updateOneByCase(userId, updateData, updateCase)
 
     if (!result) throw new Error('Cannot update user')
 
-    console.log('User update result: ', result)
 
     if (result.modifiedCount === 1 && result.matchedCount === 1) {
       if (UserUpdateCases['addEle:savedPlaces' === updateCase && updateCase]) {
