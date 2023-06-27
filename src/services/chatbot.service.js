@@ -270,6 +270,19 @@ const getText = async (data) => {
   }
 }
 
+const testChatGPT = async (data) => {
+  try {
+    const query = `Please create only the itinerary from the user's message: "${data.userMessgage}". You need to format your response by adding [] around locations with province separated by pipe. The default itinerary length is five days if not provided.`
+
+    let result = await ChatGptProvider.textGenerationTest(data.userMessgage)
+    return result
+
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const ChatBotService = {
-  getText
+  getText,
+  testChatGPT
 }

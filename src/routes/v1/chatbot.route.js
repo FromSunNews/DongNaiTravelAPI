@@ -7,4 +7,7 @@ const router = express.Router()
 router.route('/get_text')
   .post(ChatBotValidation.getText, ChatBotController.getText)
 
+router.route('/test_chatgpt')
+  .post(ChatBotController.testChatGPT)
+
 export const chatbotRoutes = router
