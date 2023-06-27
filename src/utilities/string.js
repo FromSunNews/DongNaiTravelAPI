@@ -1,3 +1,4 @@
+import { FILE_URL_RULE } from './validators'
 /**
  * @typedef MDNameProps
  * @property {"BOLD"} BOLD
@@ -16,6 +17,7 @@
  * @property {"LINK"} LINK
  * @property {"IMAGE"} IMAGE
  */
+
 
 export const MD_AS_STR = {
   BOLD: '(?:(?:\\*\\*)|(?:__))([^\\*_\\s]+[^\\*]+[^\\*\\s]+|[^\\*_\\s]+)(?:(?:\\*\\*)|(?:__))',
@@ -106,8 +108,10 @@ export function getBase64PhotoInMD(md, options) {
   matches = [...matches]
   matches.forEach(match => {
     let base64 = match[1]
-    md = md.replace(MD['IMAGE'].DEFAULT, replaceBase64MD)
-    photos.push(base64)
+    if (!FILE_URL_RULE.test(base64)) {
+      md = md.replace(/!\[\]\(.+?\)/, replaceBase64MD)
+      photos.push(base64)
+    }
   })
   return [photos, md]
 }

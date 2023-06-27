@@ -4,6 +4,7 @@ import { HttpStatusCode } from 'utilities/constants'
 
 const isAuthorized = async (req, res, next) => {
   const clientAccessToken = req.body?.accessToken
+  delete req.body?.accessToken
   if (!clientAccessToken) {
     return res.status(HttpStatusCode.UNAUTHORIZED).json({
       errors: 'Unauthorized'
