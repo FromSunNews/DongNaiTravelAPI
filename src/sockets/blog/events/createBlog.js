@@ -189,81 +189,81 @@ export function createBlog(io, socket, eventName) {
             VN_MALE_1: ''
           }
         }
-        if (plainText.length <= LIMIT_LENGTH) {
-          socket.emit(eventName, createMessage({ progress: 80 }, 'Creating speech...'))
-          let plainTextParts = getContentParts(plainText)
-          let partsLength = plainTextParts.length
-          console.log('Parts: ', plainTextParts)
-          /**
-         * `base64SpeechPromises` sẽ có dạng
-         * `[[promise<string>, promise<string>, ..., promise<string>(n)], [promise<string>, promise<string>, ..., promise<string>(n)], ...,[...](m)]`
-         * Tuỳ theo part và số lượng voice muốn tạo, thì sẽ trả về kiểu khác. Cụ thể là một ma trận n x m
-         * - n là số parts
-         * - m là số voice
-         *
-         * Hiện tại thì có 2 voice cho tiếng Việt nên sẽ trả về một mảng gồm 2 phần tử, mỗi phần tử sẽ chứa các promises của
-         * part.
-         */
-          let base64SpeechsPromises = fullTextToSpeech.map(textToSpeechId => {
-          // Hãy xem mỗi part này là một plainText. Với n parts plainText thì mình sẽ có n * 2 request.
-            console.log('Request [Language]: ', TextToSpeechConstants[textToSpeechId])
-            return plainTextParts.map(part => axios.post(
-              `https://texttospeech.googleapis.com/v1/text:synthesize?key=${env.MAP_API_KEY}`,
-              {
-                input: {
-                  text: part
-                },
-                voice: {
-                  languageCode: TextToSpeechConstants[textToSpeechId].languageCode,
-                  name: TextToSpeechConstants[textToSpeechId].name
-                },
-                audioConfig: {
-                  audioEncoding: 'mp3'
-                }
-              }
-            ))
-          }).catch(err => {
-            console.log('Lỗi gọi gg api nè ba:', err)
-          })
+        // if (plainText.length <= LIMIT_LENGTH) {
+        //   socket.emit(eventName, createMessage({ progress: 80 }, 'Creating speech...'))
+        //   let plainTextParts = getContentParts(plainText)
+        //   let partsLength = plainTextParts.length
+        //   console.log('Parts: ', plainTextParts)
+        //   /**
+        //  * `base64SpeechPromises` sẽ có dạng
+        //  * `[[promise<string>, promise<string>, ..., promise<string>(n)], [promise<string>, promise<string>, ..., promise<string>(n)], ...,[...](m)]`
+        //  * Tuỳ theo part và số lượng voice muốn tạo, thì sẽ trả về kiểu khác. Cụ thể là một ma trận n x m
+        //  * - n là số parts
+        //  * - m là số voice
+        //  *
+        //  * Hiện tại thì có 2 voice cho tiếng Việt nên sẽ trả về một mảng gồm 2 phần tử, mỗi phần tử sẽ chứa các promises của
+        //  * part.
+        //  */
+        //   let base64SpeechsPromises = fullTextToSpeech.map(textToSpeechId => {
+        //   // Hãy xem mỗi part này là một plainText. Với n parts plainText thì mình sẽ có n * 2 request.
+        //     console.log('Request [Language]: ', TextToSpeechConstants[textToSpeechId])
+        //     return plainTextParts.map(part => axios.post(
+        //       `https://texttospeech.googleapis.com/v1/text:synthesize?key=${env.MAP_API_KEY}`,
+        //       {
+        //         input: {
+        //           text: part
+        //         },
+        //         voice: {
+        //           languageCode: TextToSpeechConstants[textToSpeechId].languageCode,
+        //           name: TextToSpeechConstants[textToSpeechId].name
+        //         },
+        //         audioConfig: {
+        //           audioEncoding: 'mp3'
+        //         }
+        //       }
+        //     ))
+        //   }).catch(err => {
+        //     console.log('Lỗi gọi gg api nè ba:', err)
+        //   })
 
-          /**
-         * Ở bước này, từ `[[promiseVoice1A, promiseVoice2A], [promiseVoice1B, promiseVoice2B]]`
-         * thành một mảng phẳng `[promiseVoice1A, promiseVoice2A, promiseVoice1B, promiseVoice2B]`
-         * Bởi vì mình chỉ nên dùng một Promise.all (axios.all) cho quá trình gọi nhiều request thôi.
-         *
-         * Khi có kết quả trả về thì base64 cũng sẽ theo giá trị đó, cho nên là mình cũng phải làm
-         * sao cho ráp đúng lại với nhau.
-         */
-          console.log('Promises: ', base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
-          let base64SpeechResponses = await axios.all(base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
-          let base64SpeechResponsesLength = base64SpeechResponses.length
-          let base64Speechs = ''
+        //   /**
+        //  * Ở bước này, từ `[[promiseVoice1A, promiseVoice2A], [promiseVoice1B, promiseVoice2B]]`
+        //  * thành một mảng phẳng `[promiseVoice1A, promiseVoice2A, promiseVoice1B, promiseVoice2B]`
+        //  * Bởi vì mình chỉ nên dùng một Promise.all (axios.all) cho quá trình gọi nhiều request thôi.
+        //  *
+        //  * Khi có kết quả trả về thì base64 cũng sẽ theo giá trị đó, cho nên là mình cũng phải làm
+        //  * sao cho ráp đúng lại với nhau.
+        //  */
+        //   console.log('Promises: ', base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
+        //   let base64SpeechResponses = await axios.all(base64SpeechsPromises.reduce((acc, prev) => acc.concat(prev), []))
+        //   let base64SpeechResponsesLength = base64SpeechResponses.length
+        //   let base64Speechs = ''
 
-          for (let i = 0; i <= base64SpeechResponsesLength; i++) {
-            let base64Speech = base64SpeechResponses[i]?.data.audioContent
-            if (i === 0) {
-              base64Speech = 'data:audio/mpeg;base64,' + base64Speech
-            }
+        //   for (let i = 0; i <= base64SpeechResponsesLength; i++) {
+        //     let base64Speech = base64SpeechResponses[i]?.data.audioContent
+        //     if (i === 0) {
+        //       base64Speech = 'data:audio/mpeg;base64,' + base64Speech
+        //     }
 
-            if (i % partsLength === 0 && i !== 0) {
-              base64SpeechBuffers.push(Buffer.from(base64Speechs))
-              base64Speechs = 'data:audio/mpeg;base64,' + base64Speech
-            }
-            base64Speechs += base64Speech
-          }
+        //     if (i % partsLength === 0 && i !== 0) {
+        //       base64SpeechBuffers.push(Buffer.from(base64Speechs))
+        //       base64Speechs = 'data:audio/mpeg;base64,' + base64Speech
+        //     }
+        //     base64Speechs += base64Speech
+        //   }
 
-          socket.emit(eventName, createMessage({ progress: 85 }, 'Uploading speech...'))
-          base64SpeechLinks = await CloudinaryProvider.streamUploadMutiple(base64SpeechBuffers, {
-            folder: CloudinaryFolders.blog_content.blog_speechs,
-            resource_type: 'auto'
-          })
+        //   socket.emit(eventName, createMessage({ progress: 85 }, 'Uploading speech...'))
+        //   base64SpeechLinks = await CloudinaryProvider.streamUploadMutiple(base64SpeechBuffers, {
+        //     folder: CloudinaryFolders.blog_content.blog_speechs,
+        //     resource_type: 'auto'
+        //   })
 
-          base64SpeechLinks.forEach((base64SpeechLink, index) => {
-            console.log('Speech cloudinary response: ', base64SpeechLink)
-            contentDoc.speech[fullTextToSpeech[index]] = base64SpeechLink.url
-            cloudinaryResourceUrls.push(base64SpeechLink.url)
-          })
-        }
+        //   base64SpeechLinks.forEach((base64SpeechLink, index) => {
+        //     console.log('Speech cloudinary response: ', base64SpeechLink)
+        //     contentDoc.speech[fullTextToSpeech[index]] = base64SpeechLink.url
+        //     cloudinaryResourceUrls.push(base64SpeechLink.url)
+        //   })
+        // }
 
         insertedContent = await BlogContentModel.insertOneBlogContent(contentDoc)
 
@@ -301,7 +301,7 @@ export function createBlog(io, socket, eventName) {
         socket.emit(eventName, createMessage({ canUpload: true, progress: progress }, 'Uploading...'))
       }
     } catch (error) {
-      console.log('[ERROR] Cloudinary resource url: ', cloudinaryResourceUrls)
+      console.log('[ERROR] All Cloudinary Resource Url (Will be delete): ', cloudinaryResourceUrls)
       CloudinaryProvider.deleteResources(cloudinaryResourceUrls).then(() => {
         socket.emit(eventName, createMessage({ isError: true }, error.message ))
         blogContent = ''

@@ -278,6 +278,21 @@ const getTextToSpeech = async (data) => {
   }
 }
 
+const createTTS = async (data) => {
+  try {
+    let { text, lang } = data
+    let response = await TextToSpeechProvider.generateSpeech({
+      text: text,
+      languageCode: TextToSpeechConstants[lang].languageCode,
+      name: TextToSpeechConstants[lang].name
+    })
+    return response
+  } catch (error) {
+    console.log(error.message)
+    return undefined
+  }
+}
+
 const suggestTitle = async (data) => {
   console.log('🚀 ~ file: content.service.js:7 ~ createNew ~ data:', data)
   // data sẽ có dạng :
@@ -306,5 +321,6 @@ export const ContentService = {
   createNew,
   getTextToSpeech,
   getTextToSpeechTesting,
-  suggestTitle
+  suggestTitle,
+  createTTS
 }

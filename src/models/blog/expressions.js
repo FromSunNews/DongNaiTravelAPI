@@ -90,6 +90,7 @@ export function getSpecialtyBlogFields() {
                 $project: {
                   _id: false,
                   plainTextMarkFormat: true,
+                  plainText: true,
                   speech: true
                 }
               }
