@@ -108,27 +108,37 @@ async function findOneBlog(data) {
  */
 async function findManyBlog(data) {
   try {
-    let { quality, fields, limit = 10, skip = 0, user, author } = data
-    let qualitys = quality?.split(',')
+    let { quality, fields, limit = 10, skip = 0, user, author, onlySavedBlogs } = data
+    let qualities = quality?.split(',')
     let pipeline = []
     let projectStage = []
     let findStage = {
       match: {
         $match: {
-          ...author ? { authorId: { $eq: author } } : {}
+          ...author ? { authorId: { $eq: author } } : {},
+          ...onlySavedBlogs ? { 'idStr': { $in: user.savedBlogs } } : {}
         }
       },
       others: []
     }
     let specialtyBlogFields = getSpecialtyBlogFields()
     let [specialtyFieldsPipeline, newFields] = getPipelineStagesWithSpecialtyFields(specialtyBlogFields, fields, user)
-
-    if (qualitys)
-      findStage = Object.assign({}, findStage, getFindStageWithFilters(BlogFindStages, qualitys))
+    console.log('Find stage: ', findStage.match)
+    console.log('Is only saved blogs? ', onlySavedBlogs)
+    console.log('Find with qualities? ', Boolean(qualities))
+    if (qualities)
+      findStage = Object.assign(findStage, getFindStageWithFilters(BlogFindStages, qualities))
 
     projectStage = createProjectionStage(getExpectedFieldsProjection(newFields))
 
-    pipeline.push(findStage.match, ...findStage.others, ...specialtyFieldsPipeline)
+    // Convert _id (ObjectId) to string.
+    if (onlySavedBlogs) pipeline.push({ $addFields: { 'idStr': { $toString: '$_id' } } })
+
+    pipeline.push(
+      findStage.match,
+      ...findStage.others,
+      ...specialtyFieldsPipeline
+    )
 
     if (projectStage[0]?.$project && Object.keys(projectStage[0]?.$project).length >= 1) pipeline.push(...projectStage)
 

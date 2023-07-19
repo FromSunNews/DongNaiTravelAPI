@@ -111,7 +111,7 @@ export function getSpecialtyPlaceFields() {
       }
     },
     _dataType: {
-      field: 'isLiked',
+      field: '_dataType',
       stages: {
         [AggregationStageNames.addFields]: { $addFields: { _dataType: 'place' } }
       }

@@ -135,17 +135,19 @@ async function getBlog(query) {
  */
 async function getBlogs(query) {
   try {
-    let { limit = 5, skip = 0, fields, quality, author } = query
+    let { limit = 5, skip = 0, fields, quality, author, onlySavedBlogs } = query
 
     let user
     if (query.userId) user = await UserModel.findOneById(query.userId)
+    if (onlySavedBlogs && !user) throw new Error('Saved blogs need user info!')
     let data = {
       quality,
       fields,
       limit: parseInt(limit),
       skip: parseInt(skip),
       user,
-      author
+      author,
+      onlySavedBlogs
     }
 
     let result = await BlogModel.findManyBlog(data)
