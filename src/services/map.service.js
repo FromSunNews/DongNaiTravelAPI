@@ -115,15 +115,17 @@ const getPlacesById = async (data) => {
  */
 const getPlacesWithPipeline = async (query) => {
   try {
-    let { limit, skip, fields, filter } = query
+    let { limit = 5, skip = 0, fields, filter, onlySavedPlaces } = query
     let user
     if (query.userId) user = await UserModel.findOneById(query.userId)
+    if (onlySavedPlaces && !user) throw new Error('Saved places need user info!')
     let data = {
       filter,
       fields,
       limit: parseInt(limit),
       skip: parseInt(skip),
-      user
+      user,
+      onlySavedPlaces
     }
     let places = await MapModel.findManyInLimitWithPipeline(data)
     // let photoPromises = places.map(place => PhotosModel.findOneByPlaceId(place.place_id))

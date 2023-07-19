@@ -106,24 +106,23 @@ const findManyInLimit = async (filter, fields, limit = 10, skip = 0) => {
  */
 const findManyInLimitWithPipeline = (function() {
   return async (data) => {
-    let { filter, fields, limit = 10, skip = 0, user } = data
+    let { filter, fields, limit = 10, skip = 0, user, onlySavedPlaces } = data
     try {
       // Đầu tiên thì split cái filter ra bằng khoảng trắng;
       let filters = filter?.split(',')
       let pipeline = []
       let projectStage = []
       // T gọi cái này là find stage là bời vì nó sẽ tìm record theo $match
-      let findStage = {
-        match: {
-          $match: {}
-        },
-        others: []
-      }
+      let findStage = { match: { $match: onlySavedPlaces ? { place_id: { $in: user.savedPlaces } } : {} }, others: [] }
       let specialtyPlaceFields = getSpecialtyPlaceFields()
       let [specialtyFieldsPipeline, newFields] = getPipelineStagesWithSpecialtyFields(specialtyPlaceFields, fields, user)
-
-      if (filters)
-        findStage = Object.assign({}, findStage, getFindStageWithFilters(PlaceFindStages, filters))
+      console.log('Saved places: ', findStage.match.$match)
+      if (filters) {
+        let result = getFindStageWithFilters(PlaceFindStages, filters)
+        findStage.match.$match = Object.assign(findStage.match.$match, result.match.$match)
+        console.log('[Merged] Find stage: ', findStage.match)
+        findStage.others = [...findStage.others, ...result.others]
+      }
 
       projectStage = createProjectionStage(getExpectedFieldsProjection(newFields))
 
