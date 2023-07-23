@@ -66,6 +66,7 @@ const bootServer = () => {
 
       // lưu socket ID của tài khoản đăng nhập vào biến socketIdMap
       socketIdMap[accountId] = socket.id
+      console.log('🚀 ~ file: server.js:69 ~ socket.on ~ socketIdMap:', socketIdMap)
     })
 
     // hàm xử lý thay đổi vị trí

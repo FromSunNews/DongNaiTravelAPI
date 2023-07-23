@@ -121,7 +121,7 @@ export function createBlog(io, socket, eventName) {
   let fullTextToSpeech = ['VN_FEMALE_1', 'VN_MALE_1']
   let cloudinaryResourceUrls = []
 
-  let LIMIT_LENGTH = 5000
+  let LIMIT_LENGTH = 3000
   // let fullTextToSpeech = ['VN_FEMALE_1', 'VN_MALE_1', 'EN_FEMALE_1', 'EN_MALE_1']
 
   /**

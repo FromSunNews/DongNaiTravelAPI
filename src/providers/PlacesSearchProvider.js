@@ -47,6 +47,46 @@ const getPlacesTextSearchAPI = async (params) => {
   return request.data
 }
 
+const getPlacesTextSearchURL = (params) => {
+  console.log('🚀 ~ file: PlacesSearchProvider.js:7 ~ getPlacesTextSearchAPI ~ params:', params)
+  // Phuong: params là object
+
+  const urlFields = ['query', 'radius', 'rankby', 'language', 'location', 'maxprice', 'minprice', 'opennow', 'pagetoken', 'region', 'type', 'key']
+
+  let url = env.PLACE_TEXT_SEARCH_BASE_URL
+
+  urlFields.map(field => {
+    // Phuong: url mẫu:
+    // https://maps.googleapis.com/maps/api/place/textsearch/json
+    // ?location=42.3675294%2C-71.186966
+    // &query=123%20main%20street
+    // &radius=10000
+    // &key=YOUR_API_KEY
+
+    // Phuong: TH query hoặc location thì phải chuyển sang url encode .Vd: dấu cách => %20, @ => %2C
+    if (field === 'query') {
+      url = url + field + '=' + encodeUrl(params[field])
+    }
+    else if (field === 'location') {
+      url = url + field + '=' + params[field].latitude + '%2C' + params[field].longitude
+    }
+    // Phuong: Giải quyết TH nếu language là rổng thì sẽ cho mặc định là tiếng việt
+    else if (!params[field] && field === 'language')
+      url = url + field + '=' + env.LANGUAGE_CODE_DEFAULT + '&'
+    // Phuong: Giải quyết TH nếu key
+    else if (!params[field] && field === 'key')
+      url = url + field + '=' + env.MAP_API_KEY
+    else if (params[field])
+      url = url + field + '=' + params[field]
+
+    // Phuong: Cuối cùng phải thêm dấu &
+    if (field !== 'key' && params[field])
+      url = url +'&'
+  })
+
+  return url
+}
+
 // Phuong: https://developers.google.com/maps/documentation/places/web-service/search-nearby
 const getPlacesNearByAPI = async (params) => {
   // Phuong: params là object
@@ -184,5 +224,6 @@ export const PlacesSearchProvider = {
   getPlacesTextSearchAPI,
   getPlaceDetailsAPI,
   getPlacePhotosAPI,
-  getPlacesNearByAPI
+  getPlacesNearByAPI,
+  getPlacesTextSearchURL
 }
